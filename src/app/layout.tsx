@@ -14,10 +14,15 @@ const noto = Noto_Sans_JP({
   variable: "--font-main",
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "SEW THE SOUND | Order Form",
   description: "Custom embroidery order form based on your sound.",
-  viewport: "width=device-width, initial-scale=1.0, viewport-fit=cover",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
