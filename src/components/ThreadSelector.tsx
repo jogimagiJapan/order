@@ -52,10 +52,6 @@ export default function ThreadSelector({
                 ))}
             </div>
 
-            <div className="text-center mb-4">
-                <span className="text-[10px] font-black tracking-widest text-sub uppercase">Selected Threads</span>
-            </div>
-
             {/* Selection Slots */}
             <div className="thread-slots">
                 {Array.from({ length: limit }).map((_, i) => {
@@ -69,11 +65,13 @@ export default function ThreadSelector({
                             className={`slot-container ${isActive ? 'active' : ''}`}
                             onClick={() => setActiveIndex(i)}
                         >
-                            <span className="slot-label">Thread {i + 1}</span>
+                            <span className="slot-label text-center">
+                                {colorObj ? colorObj.name : `Thread ${i + 1}`}
+                            </span>
                             {colorId ? (
-                                <div className="flex flex-col items-center gap-1 animate-fade-in">
-                                    <div className="slot-chip" style={{ backgroundColor: colorObj?.hex }} />
-                                    <span className="slot-id">{colorId}</span>
+                                <div className="flex flex-col items-center gap-1 animate-fade-in w-full">
+                                    <div className="slot-chip mx-auto" style={{ backgroundColor: colorObj?.hex }} />
+                                    <span className="slot-id text-center w-full">{colorId}</span>
                                 </div>
                             ) : (
                                 <div className="slot-placeholder">

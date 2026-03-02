@@ -3,20 +3,22 @@
 export default function Step1_IDSelection({
     files,
     onSelect,
+    onNext,
     selectedId
 }: {
     files: { fullName: string; friendlyId: string; url: string }[];
     onSelect: (id: string) => void;
+    onNext: () => void;
     selectedId: string;
 }) {
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in pb-20">
             <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-2">01. Select ID</h2>
+                <h2 className="text-2xl mb-2 mt-6">01. Select ID</h2>
                 <p className="text-sub">録音済みのファイルIDを選択してください</p>
             </header>
 
-            <div className="grid gap-4">
+            <div className="grid gap-4 mb-10">
                 {files.length > 0 ? (
                     files.map((file) => (
                         <div
@@ -34,6 +36,17 @@ export default function Step1_IDSelection({
                     </div>
                 )}
             </div>
+
+            {selectedId && (
+                <div className="flex justify-center animate-fade-in">
+                    <button
+                        className="submit-btn"
+                        onClick={() => onNext()}
+                    >
+                        CONTINUE →
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

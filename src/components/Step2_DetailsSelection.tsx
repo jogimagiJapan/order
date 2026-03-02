@@ -2,7 +2,7 @@
 
 import { Plan, MasterDataItem, OrderState } from "@/hooks/useOrderForm";
 import ThreadSelector from "./ThreadSelector";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function Step2_DetailsSelection({
     order,
@@ -13,6 +13,33 @@ export default function Step2_DetailsSelection({
     masterData: { items: MasterDataItem[]; colors: MasterDataItem[]; sizes: MasterDataItem[] };
     onUpdate: (updates: Partial<OrderState>) => void;
 }) {
+    const plansRef = useRef<HTMLElement>(null);
+    const itemsRef = useRef<HTMLElement>(null);
+    const colorSizeRef = useRef<HTMLDivElement>(null);
+    const threadsRef = useRef<HTMLElement>(null);
+    const remarksRef = useRef<HTMLElement>(null);
+
+    const scrollTo = (ref: React.RefObject<HTMLElement | null>) => {
+        setTimeout(() => {
+            ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+    };
+
+    // Auto-scroll logic
+    useEffect(() => {
+        if (order.plan && !order.item) scrollTo(itemsRef);
+    }, [order.plan, order.item]);
+
+    useEffect(() => {
+        if (order.item && (!order.itemColor || !order.itemSize)) scrollTo(colorSizeRef);
+    }, [order.item, order.itemColor, order.itemSize]);
+
+    useEffect(() => {
+        if (order.itemColor && order.itemSize && order.threads.every(t => !t)) scrollTo(threadsRef);
+    }, [order.itemColor, order.itemSize, order.threads]);
+
+    // Note: Not scrolling to remarks automatically as users might want to review threads
+
     const plans: { id: Plan; label: string; price: string }[] = [
         { id: "Lite", label: "Lite", price: "¥2,000" },
         { id: "Standard", label: "Standard", price: "¥4,000" },
@@ -72,13 +99,13 @@ export default function Step2_DetailsSelection({
     const threadCount = order.plan === "Lite" ? 1 : 3;
 
     return (
-        <div className="animate-fade-in pb-10">
+        <div className="animate-fade-in pb-20">
             <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-2">02. Customize</h2>
+                <h2 className="text-2xl mb-2 mt-6">02. Customize</h2>
                 <p className="text-sub">デザインと詳細を選択してください</p>
             </header>
 
-            <section className="mb-10">
+            <section className="mb-10" ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-3">
                     {plans.map((p) => (
@@ -100,7 +127,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className="mb-10">
+            <section className="mb-10" ref={itemsRef}>
                 <h3 className="section-title">02-2. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
@@ -123,7 +150,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <div className="grid grid-2 mb-10">
+            <div className="grid grid-2 mb-10" ref={colorSizeRef}>
                 <section>
                     <h3 className="section-title">02-3. COLOR</h3>
                     <div className="grid">
@@ -177,7 +204,7 @@ export default function Step2_DetailsSelection({
                 </section>
             </div>
 
-            <section className="mb-10">
+            <section className="mb-10" ref={threadsRef}>
                 <h3 className="section-title">02-5. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector
@@ -192,7 +219,7 @@ export default function Step2_DetailsSelection({
                 )}
             </section>
 
-            <section>
+            <section ref={remarksRef}>
                 <h3 className="section-title">02-6. REMARKS (OPTIONAL)</h3>
                 <textarea
                     className="w-full min-h-[120px] resize-none text-sm"

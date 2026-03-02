@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOrderForm } from "@/hooks/useOrderForm";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
@@ -22,6 +22,11 @@ export default function OrderPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -119,8 +124,8 @@ export default function OrderPage() {
               selectedId={order.selectedId}
               onSelect={(id) => {
                 updateOrder({ selectedId: id });
-                nextStep();
               }}
+              onNext={nextStep}
             />
           )}
 
@@ -165,7 +170,7 @@ export default function OrderPage() {
                 onClick={handleSubmit}
                 style={{ backgroundColor: 'var(--text-main)', minWidth: '160px' }}
               >
-                {isSubmitting ? "WAIT..." : "FINALIZE →"}
+                {isSubmitting ? "WAIT..." : "決定 →"}
               </button>
             )}
           </div>
