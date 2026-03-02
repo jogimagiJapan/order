@@ -203,15 +203,130 @@ h3 {
   margin-top: 8px;
 }
 
+/* Unified Thread Grid */
+.thread-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.color-chip-large {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid var(--white);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-chip-large::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.color-chip-large.active {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.color-chip-large.active::before {
+  border-color: var(--accent-gold);
+}
+
+.color-chip-large .check {
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.color-chip-large.active .check {
+  opacity: 1;
+}
+
+/* Refined Navigation */
+.nav-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  background: linear-gradient(to top, var(--base-bg) 70%, transparent);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-inner {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 550px;
+}
+
+.btn-nav {
+  flex: 1;
+  padding: 18px;
+  border-radius: 30px;
+  font-family: var(--font-title);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-back {
+  background-color: var(--card-bg);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+}
+
+.btn-continue {
+  background-color: var(--text-main);
+  color: var(--card-bg);
+  box-shadow: 0 10px 20px rgba(44, 62, 80, 0.15);
+}
+
+.btn-continue:disabled {
+  background-color: var(--border);
+  color: var(--text-sub);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-nav:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
 .submit-btn {
   width: 100%;
   padding: 20px;
   background-color: var(--text-main);
   color: var(--card-bg);
-  border-radius: var(--radius);
+  border-radius: 30px;
   font-family: var(--font-title);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
   border: none;
   cursor: pointer;
   box-shadow: 0 10px 20px rgba(44, 62, 80, 0.2);

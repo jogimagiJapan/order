@@ -26,22 +26,33 @@ export default function OrderPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Map threads array to thread1, 2, 3 for GAS backend compatibility
+      const submissionData = {
+        ...order,
+        thread1: order.threads[0] || "",
+        thread2: order.threads[1] || "",
+        thread3: order.threads[2] || "",
+      };
+
       const response = await fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify(order),
+        body: JSON.stringify(submissionData),
       });
       const result = await response.json();
       if (result.result === "success") {
         setIsSuccess(true);
       } else {
-        throw new Error(result.error);
+        alert("Submission failed: " + result.error);
       }
-    } catch (err) {
-      alert("送信に失敗しました。電波状況を確認してください。\n" + err);
+    } catch (error) {
+      console.error("Submit error:", error);
+      alert("Error submitting order. Please check your connection.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isStep2Valid = order.plan && order.item && order.threads.length > 0;
 
   if (loading) {
     return (
@@ -124,26 +135,26 @@ export default function OrderPage() {
         </main>
       </div>
 
-      {/* Navigation Footer */}
+      {/* Refined Navigation Footer */}
       {step > 1 && !isSuccess && (
-        <div className="fixed bottom-0 left-0 w-full p-6 bg-base-bg/80 backdrop-blur-md border-t border-border flex gap-4 max-w-[550px] mx-auto right-0 z-50">
-          <button
-            className="flex-1 p-4 rounded-xl border border-border bg-white font-bold text-xs tracking-widest text-sub shadow-sm active:scale-95 transition-all"
-            onClick={prevStep}
-          >
-            BACK
-          </button>
-          {step === 2 && (
-            <button
-              className="flex-1 p-4 rounded-xl bg-text-main text-white font-bold text-xs tracking-widest shadow-md disabled:opacity-20 active:scale-95 transition-all"
-              disabled={!order.plan || !order.item || !order.thread1}
-              onClick={nextStep}
-            >
-              CONTINUE
+        <div className="nav-container">
+          <div className="nav-inner">
+            <button className="btn-nav btn-back" onClick={prevStep}>
+              <span>←</span> BACK
             </button>
-          )}
+            {step === 2 && (
+              <button
+                className="btn-nav btn-continue"
+                disabled={!isStep2Valid}
+                onClick={nextStep}
+              >
+                CONTINUE <span>→</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
+```

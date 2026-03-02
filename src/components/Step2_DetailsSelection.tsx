@@ -56,9 +56,18 @@ export default function Step2_DetailsSelection({
         }
     }, [masterData, order.item, order.itemColor, order.itemSize, onUpdate]);
 
-    const handleThreadChange = (index: number, value: string) => {
-        const key = `thread${index + 1}` as keyof OrderState;
-        onUpdate({ [key]: value });
+    const handleThreadToggle = (id: string) => {
+        const current = order.threads;
+        if (current.includes(id)) {
+            // Only allow de-selection if there's more than 1 (keep at least 1)
+            if (current.length > 1) {
+                onUpdate({ threads: current.filter(t => t !== id) });
+            }
+        } else {
+            if (current.length < threadCount) {
+                onUpdate({ threads: [...current, id] });
+            }
+        }
     };
 
     const threadCount = order.plan === "Lite" ? 1 : 3;
@@ -77,7 +86,12 @@ export default function Step2_DetailsSelection({
                         <div
                             key={p.id}
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
-                            onClick={() => onUpdate({ plan: p.id })}
+                            onClick={() => {
+                                // Reset threads if plan changes and exceeds new limit
+                                const limit = p.id === "Lite" ? 1 : 3;
+                                const newThreads = order.threads.slice(0, limit);
+                                onUpdate({ plan: p.id, threads: newThreads });
+                            }}
                         >
                             <span className="text-xs font-bold tracking-widest">{p.label}</span>
                             <span className="text-[10px] mt-1 opacity-60">{p.price}</span>
@@ -167,9 +181,9 @@ export default function Step2_DetailsSelection({
                 <h3 className="section-title">02-5. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector
-                        count={threadCount}
-                        values={[order.thread1, order.thread2, order.thread3]}
-                        onChange={handleThreadChange}
+                        limit={threadCount}
+                        selected={order.threads}
+                        onToggle={handleThreadToggle}
                     />
                 ) : (
                     <div className="thread-card text-center py-10">

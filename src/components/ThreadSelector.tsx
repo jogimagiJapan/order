@@ -3,47 +3,48 @@
 import { THREAD_COLORS } from "@/constants/colors";
 
 export default function ThreadSelector({
-    count,
-    values,
-    onChange
+    limit,
+    selected,
+    onToggle
 }: {
-    count: number;
-    values: string[];
-    onChange: (index: number, value: string) => void;
+    limit: number;
+    selected: string[];
+    onToggle: (id: string) => void;
 }) {
     return (
-        <div className="grid gap-6">
-            {Array.from({ length: count }).map((_, i) => (
-                <div key={i} className="thread-card animate-fade-in">
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="text-[10px] font-black tracking-widest text-accent-gold uppercase">Thread {i + 1}</span>
-                        {values[i] && (
-                            <span className="text-[10px] font-bold text-sub">
-                                {THREAD_COLORS.find(c => c.id === values[i])?.name}
-                            </span>
-                        )}
-                    </div>
+        <div className="py-6">
+            <div className="flex justify-between items-center mb-8 px-2">
+                <span className="text-[10px] font-black tracking-widest text-sub uppercase">Selected Colors</span>
+                <span className="text-xs font-bold text-accent-gold">{selected.length} / {limit}</span>
+            </div>
 
-                    <div className="grid grid-cols-5 gap-3 justify-center">
-                        {THREAD_COLORS.map((color) => (
+            <div className="thread-grid">
+                {THREAD_COLORS.map((color) => {
+                    const isActive = selected.includes(color.id);
+                    return (
+                        <div key={color.id} className="chip-container">
                             <div
-                                key={color.id}
-                                className={`chip-container ${values[i] === color.id ? "active" : ""}`}
-                                onClick={() => onChange(i, color.id)}
+                                className={`color-chip-large ${isActive ? "active" : ""}`}
+                                style={{ backgroundColor: color.hex }}
+                                onClick={() => onToggle(color.id)}
                             >
-                                <div
-                                    className="color-chip"
-                                    style={{ backgroundColor: color.hex }}
-                                    title={color.name}
-                                />
-                                <span className="text-[8px] font-bold opacity-0 transition-opacity active:opacity-100">
-                                    {color.id}
-                                </span>
+                                <span className="check">✓</span>
                             </div>
-                        ))}
+                            <span className={`text-[10px] font-bold mt-2 transition-colors ${isActive ? "text-text-main" : "text-sub"}`}>
+                                {color.id}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-2 justify-center">
+                {selected.map(id => (
+                    <div key={id} className="badge bg-white border border-border">
+                        {THREAD_COLORS.find(c => c.id === id)?.name}
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }

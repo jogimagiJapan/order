@@ -18,9 +18,7 @@ export interface OrderState {
     item: string;
     itemColor: string;
     itemSize: string;
-    thread1: string;
-    thread2: string;
-    thread3: string;
+    threads: string[]; // Changed from thread1,2,3 to an array
     notes: string;
     totalPrice: number;
 }
@@ -41,9 +39,7 @@ export function useOrderForm() {
         item: "",
         itemColor: "",
         itemSize: "",
-        thread1: "",
-        thread2: "",
-        thread3: "",
+        threads: [],
         notes: "",
         totalPrice: 0,
     });
