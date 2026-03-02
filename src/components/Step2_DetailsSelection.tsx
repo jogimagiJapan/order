@@ -56,18 +56,16 @@ export default function Step2_DetailsSelection({
         }
     }, [masterData, order.item, order.itemColor, order.itemSize, onUpdate]);
 
-    const handleThreadToggle = (id: string) => {
-        const current = order.threads;
-        if (current.includes(id)) {
-            // Allow deselecting any color
-            onUpdate({ threads: current.filter(t => t !== id) });
-        } else {
-            if (current.length < threadCount) {
-                onUpdate({ threads: [...current, id] });
-            } else if (threadCount === 1) {
-                // For Lite plan, auto-replace if choosing a new one
-                onUpdate({ threads: [id] });
-            }
+    const handleThreadToggle = (id: string, index?: number) => {
+        const count = order.plan === "Lite" ? 1 : 3;
+        const newThreads = [...order.threads];
+
+        // Ensure array is of correct length
+        while (newThreads.length < count) newThreads.push("");
+
+        if (index !== undefined && index < count) {
+            newThreads[index] = id;
+            onUpdate({ threads: newThreads });
         }
     };
 
@@ -88,9 +86,10 @@ export default function Step2_DetailsSelection({
                             key={p.id}
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
                             onClick={() => {
-                                // Reset threads if plan changes and exceeds new limit
+                                // Reset threads if plan changes
                                 const limit = p.id === "Lite" ? 1 : 3;
-                                const newThreads = order.threads.slice(0, limit);
+                                let newThreads = order.threads.slice(0, limit);
+                                while (newThreads.length < limit) newThreads.push("");
                                 onUpdate({ plan: p.id, threads: newThreads });
                             }}
                         >

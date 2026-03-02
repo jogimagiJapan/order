@@ -58,7 +58,8 @@ export default function OrderPage() {
     order.item &&
     order.itemColor &&
     order.itemSize &&
-    order.threads.length === threadLimit;
+    order.threads.length === threadLimit &&
+    order.threads.every(t => t !== "");
 
   if (loading) {
     return (
