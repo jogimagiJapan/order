@@ -53,41 +53,42 @@ export default function OrderPage() {
 
   if (isSuccess) {
     return (
-      <div className="container animate-fade-in flex flex-col items-center justify-center text-center h-full">
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 text-3xl">
+      <div className="container animate-fade-in flex flex-col items-center justify-center text-center min-h-[80vh]">
+        <div className="w-24 h-24 bg-white border border-border text-accent-blue rounded-full flex items-center justify-center mb-8 text-4xl shadow-sm">
           ✓
         </div>
-        <h1 className="mb-2">THANK YOU!</h1>
-        <p className="text-sub mb-8">
+        <h1 className="text-3xl mb-4">THANK YOU</h1>
+        <p className="text-sub mb-10 leading-relaxed">
           ご注文を承りました。<br />
-          制作過程は以下のリンクよりご確認いただけます。
+          あなたの音が形になるまで、もう少々お待ちください。<br />
+          制作過程は以下のボタンよりご確認いただけます。
         </p>
         <button
-          className="submit-btn mb-4"
+          className="submit-btn mb-6"
           onClick={() => window.location.href = "https://sts-process-visualization.jogimagi.com/"}
         >
-          MAKING PROCESS
+          VIEW MAKING PROCESS
         </button>
         <button
-          className="text-sub underline text-xs"
+          className="text-sub underline text-xs tracking-widest opacity-60 hover:opacity-100 transition-opacity"
           onClick={() => window.location.reload()}
         >
-          ホームへ戻る
+          HOME
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="container pb-24">
-        <header className="mb-8 text-center pt-4">
-          <h1 className="text-xl">SEW THE SOUND</h1>
-          <div className="flex justify-center gap-2 mt-4">
+    <div className="min-h-screen bg-base-bg">
+      <div className="container">
+        <header className="mb-12 text-center pt-8">
+          <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
+          <div className="flex justify-center gap-3 mt-6">
             {[1, 2, 3].map((s) => (
               <div
                 key={s}
-                className={`w-2 h-2 rounded-full ${step >= s ? "bg-primary" : "bg-border"}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${step === s ? "bg-accent-gold w-8" : step > s ? "bg-text-main" : "bg-border"}`}
               />
             ))}
           </div>
@@ -125,20 +126,20 @@ export default function OrderPage() {
 
       {/* Navigation Footer */}
       {step > 1 && !isSuccess && (
-        <div className="fixed bottom-0 left-0 w-full p-6 bg-white border-t flex gap-4 max-w-[500px] mx-auto right-0">
+        <div className="fixed bottom-0 left-0 w-full p-6 bg-base-bg/80 backdrop-blur-md border-t border-border flex gap-4 max-w-[550px] mx-auto right-0 z-50">
           <button
-            className="flex-1 p-4 rounded-xl border font-bold text-sm"
+            className="flex-1 p-4 rounded-xl border border-border bg-white font-bold text-xs tracking-widest text-sub shadow-sm active:scale-95 transition-all"
             onClick={prevStep}
           >
             BACK
           </button>
           {step === 2 && (
             <button
-              className="flex-1 p-4 rounded-xl bg-primary text-white font-bold text-sm disabled:opacity-30"
+              className="flex-1 p-4 rounded-xl bg-text-main text-white font-bold text-xs tracking-widest shadow-md disabled:opacity-20 active:scale-95 transition-all"
               disabled={!order.plan || !order.item || !order.thread1}
               onClick={nextStep}
             >
-              NEXT
+              CONTINUE
             </button>
           )}
         </div>

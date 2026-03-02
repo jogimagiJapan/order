@@ -65,10 +65,13 @@ export default function Step2_DetailsSelection({
 
     return (
         <div className="animate-fade-in pb-10">
-            <h2 className="mb-4 text-center">Step 02: Customize</h2>
+            <header className="mb-10 text-center">
+                <h2 className="text-2xl mb-2">02. Customize</h2>
+                <p className="text-sub">デザインと詳細を選択してください</p>
+            </header>
 
-            <section className="mb-8">
-                <h3 className="section-title mb-2 text-xs font-bold text-sub">02-1. SELECT PLAN</h3>
+            <section className="mb-10">
+                <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-3">
                     {plans.map((p) => (
                         <div
@@ -76,22 +79,21 @@ export default function Step2_DetailsSelection({
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
                             onClick={() => onUpdate({ plan: p.id })}
                         >
-                            <span className="text-sm font-bold">{p.label}</span>
-                            <span className="text-[10px] opacity-70">{p.price}</span>
+                            <span className="text-xs font-bold tracking-widest">{p.label}</span>
+                            <span className="text-[10px] mt-1 opacity-60">{p.price}</span>
                         </div>
                     ))}
                 </div>
             </section>
 
-            <section className="mb-8">
-                <h3 className="section-title mb-2 text-xs font-bold text-sub">02-2. SELECT ITEM</h3>
+            <section className="mb-10">
+                <h3 className="section-title">02-2. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
                         <div
                             key={item.name}
                             className={`tile ${order.item === item.name ? "active" : ""}`}
                             onClick={() => {
-                                // Reset color/size when item changes
                                 onUpdate({
                                     item: item.name,
                                     itemColor: "",
@@ -100,19 +102,21 @@ export default function Step2_DetailsSelection({
                             }}
                         >
                             <span className="text-sm font-bold">{item.name}</span>
-                            <span className="text-[10px] opacity-70">+¥{item.price.toLocaleString()}</span>
+                            <span className="text-[10px] mt-1 opacity-60">+¥{item.price.toLocaleString()}</span>
                             {masterData.items.length === 1 && <span className="badge">Auto-Selected</span>}
                         </div>
                     ))}
                 </div>
             </section>
 
-            <div className="grid grid-2 mb-8">
+            <div className="grid grid-2 mb-10">
                 <section>
-                    <h3 className="section-title mb-2 text-xs font-bold text-sub">02-3. COLOR</h3>
+                    <h3 className="section-title">02-3. COLOR</h3>
                     <div className="grid">
                         {!order.item ? (
-                            <p className="text-[10px] text-sub italic">Select item first</p>
+                            <div className="tile opacity-30 cursor-not-allowed">
+                                <span className="text-[10px] italic">Select item first</span>
+                            </div>
                         ) : filteredColors.length > 0 ? (
                             filteredColors.map((c) => (
                                 <div
@@ -125,16 +129,20 @@ export default function Step2_DetailsSelection({
                                 </div>
                             ))
                         ) : (
-                            <p className="text-[10px] text-sub italic">No colors available</p>
+                            <div className="tile opacity-30 cursor-not-allowed">
+                                <span className="text-[10px] italic">No colors</span>
+                            </div>
                         )}
                     </div>
                 </section>
 
                 <section>
-                    <h3 className="section-title mb-2 text-xs font-bold text-sub">02-4. SIZE</h3>
+                    <h3 className="section-title">02-4. SIZE</h3>
                     <div className="grid">
                         {!order.item ? (
-                            <p className="text-[10px] text-sub italic">Select item first</p>
+                            <div className="tile opacity-30 cursor-not-allowed">
+                                <span className="text-[10px] italic">Select item first</span>
+                            </div>
                         ) : filteredSizes.length > 0 ? (
                             filteredSizes.map((s) => (
                                 <div
@@ -147,14 +155,16 @@ export default function Step2_DetailsSelection({
                                 </div>
                             ))
                         ) : (
-                            <p className="text-[10px] text-sub italic">No sizes available</p>
+                            <div className="tile opacity-30 cursor-not-allowed">
+                                <span className="text-[10px] italic">No sizes</span>
+                            </div>
                         )}
                     </div>
                 </section>
             </div>
 
-            <section className="mb-8">
-                <h3 className="section-title mb-2 text-xs font-bold text-sub">02-5. THREAD COLORS</h3>
+            <section className="mb-10">
+                <h3 className="section-title">02-5. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector
                         count={threadCount}
@@ -162,16 +172,17 @@ export default function Step2_DetailsSelection({
                         onChange={handleThreadChange}
                     />
                 ) : (
-                    <p className="text-center text-sub italic">Please select a plan first.</p>
+                    <div className="thread-card text-center py-10">
+                        <p className="text-sm text-sub italic">Please select a plan first to choose threads.</p>
+                    </div>
                 )}
             </section>
 
             <section>
-                <h3 className="section-title mb-2 text-xs font-bold text-sub">02-6. REMARKS (OPTIONAL)</h3>
+                <h3 className="section-title">02-6. REMARKS (OPTIONAL)</h3>
                 <textarea
-                    className="w-full p-4 border rounded-xl outline-none focus:border-primary transition-colors text-sm"
-                    rows={3}
-                    placeholder="ご要望があればご記入ください"
+                    className="w-full min-h-[120px] resize-none text-sm"
+                    placeholder="ご要望や特記事項があればご記入ください"
                     value={order.notes}
                     onChange={(e) => onUpdate({ notes: e.target.value })}
                 />

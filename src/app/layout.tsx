@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Montserrat, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+export const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-title",
+});
+
+const noto = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-main",
+});
 
 export const metadata: Metadata = {
   title: "SEW THE SOUND | Order Form",

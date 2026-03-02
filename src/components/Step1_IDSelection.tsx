@@ -11,9 +11,12 @@ export default function Step1_IDSelection({
 }) {
     return (
         <div className="animate-fade-in">
-            <h2 className="mb-4 text-center">Step 01: Select ID</h2>
-            <p className="text-sub text-center mb-6">録音されたファイルから自分のIDを選択してください。</p>
-            <div className="grid">
+            <header className="mb-10 text-center">
+                <h2 className="text-2xl mb-2">01. Select ID</h2>
+                <p className="text-sub">録音済みのファイルIDを選択してください</p>
+            </header>
+
+            <div className="grid gap-4">
                 {files.length > 0 ? (
                     files.map((file) => (
                         <div
@@ -21,12 +24,14 @@ export default function Step1_IDSelection({
                             className={`tile ${selectedId === file.friendlyId ? "active" : ""}`}
                             onClick={() => onSelect(file.friendlyId)}
                         >
-                            <span className="font-bold">{file.friendlyId}</span>
-                            <span className="text-xs opacity-70">{file.fullName}</span>
+                            <span className="text-lg font-bold tracking-tight">{file.friendlyId}</span>
                         </div>
                     ))
                 ) : (
-                    <p className="text-center text-sub">最新のファイルが見つかりません。</p>
+                    <div className="thread-card text-center py-20">
+                        <p className="text-sub italic">最新のファイルが見つかりません。</p>
+                        <p className="text-[10px] mt-2 opacity-50">しばらくしてから再度お試しください</p>
+                    </div>
                 )}
             </div>
         </div>

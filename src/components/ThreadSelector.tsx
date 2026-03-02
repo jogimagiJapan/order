@@ -13,29 +13,37 @@ export default function ThreadSelector({
 }) {
     return (
         <div className="grid gap-6">
-            {[...Array(3)].map((_, i) => {
-                const disabled = i >= count;
-                return (
-                    <div key={i} style={{ opacity: disabled ? 0.3 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
-                        <p className="text-xs font-bold mb-2">THREAD {i + 1} {disabled && "(Disabled)"}</p>
-                        <div className="flex flex-wrap gap-3 justify-center">
-                            {THREAD_COLORS.map((color) => (
-                                <div
-                                    key={color.id}
-                                    className={`chip-container ${values[i] === color.id ? "active" : ""}`}
-                                    onClick={() => !disabled && onChange(i, color.id)}
-                                >
-                                    <div
-                                        className="color-chip"
-                                        style={{ backgroundColor: color.hex }}
-                                    />
-                                    <span className="text-[10px] font-bold">{color.id}</span>
-                                </div>
-                            ))}
-                        </div>
+            {Array.from({ length: count }).map((_, i) => (
+                <div key={i} className="thread-card animate-fade-in">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] font-black tracking-widest text-accent-gold uppercase">Thread {i + 1}</span>
+                        {values[i] && (
+                            <span className="text-[10px] font-bold text-sub">
+                                {THREAD_COLORS.find(c => c.id === values[i])?.name}
+                            </span>
+                        )}
                     </div>
-                );
-            })}
+
+                    <div className="grid grid-cols-5 gap-3 justify-center">
+                        {THREAD_COLORS.map((color) => (
+                            <div
+                                key={color.id}
+                                className={`chip-container ${values[i] === color.id ? "active" : ""}`}
+                                onClick={() => onChange(i, color.id)}
+                            >
+                                <div
+                                    className="color-chip"
+                                    style={{ backgroundColor: color.hex }}
+                                    title={color.name}
+                                />
+                                <span className="text-[8px] font-bold opacity-0 transition-opacity active:opacity-100">
+                                    {color.id}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }
