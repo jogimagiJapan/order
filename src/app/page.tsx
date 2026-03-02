@@ -52,7 +52,13 @@ export default function OrderPage() {
     }
   };
 
-  const isStep2Valid = order.plan && order.item && order.threads.length > 0;
+  const threadLimit = order.plan === "Lite" ? 1 : 3;
+  const isStep2Valid =
+    order.plan &&
+    order.item &&
+    order.itemColor &&
+    order.itemSize &&
+    order.threads.length === threadLimit;
 
   if (loading) {
     return (

@@ -59,13 +59,14 @@ export default function Step2_DetailsSelection({
     const handleThreadToggle = (id: string) => {
         const current = order.threads;
         if (current.includes(id)) {
-            // Only allow de-selection if there's more than 1 (keep at least 1)
-            if (current.length > 1) {
-                onUpdate({ threads: current.filter(t => t !== id) });
-            }
+            // Allow deselecting any color
+            onUpdate({ threads: current.filter(t => t !== id) });
         } else {
             if (current.length < threadCount) {
                 onUpdate({ threads: [...current, id] });
+            } else if (threadCount === 1) {
+                // For Lite plan, auto-replace if choosing a new one
+                onUpdate({ threads: [id] });
             }
         }
     };
