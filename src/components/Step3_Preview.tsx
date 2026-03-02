@@ -49,14 +49,12 @@ export default function Step3_Preview({
                             const color = getThreadColor(tid);
                             return (
                                 <div key={i} className="thread-preview-item animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                                    <span className="text-[10px] font-black leading-none mb-2">{tid}</span>
                                     <div
                                         className="color-dot-large"
                                         style={{ backgroundColor: color?.hex }}
                                     />
-                                    <div className="flex flex-col items-center mt-1">
-                                        <span className="text-[10px] font-black leading-none">{tid}</span>
-                                        <span className="text-[8px] text-sub font-bold uppercase mt-1">{color?.name}</span>
-                                    </div>
+                                    <span className="text-[8px] text-sub font-bold uppercase mt-2">{color?.name}</span>
                                 </div>
                             );
                         })}
