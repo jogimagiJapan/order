@@ -134,8 +134,6 @@ export default function OrderPage() {
           {step === 3 && (
             <Step3_Preview
               order={order}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
             />
           )}
         </main>
@@ -145,9 +143,10 @@ export default function OrderPage() {
       {step > 1 && !isSuccess && (
         <div className="nav-container">
           <div className="nav-inner">
-            <button className="btn-nav btn-back" onClick={prevStep}>
+            <button className="btn-nav btn-back" onClick={prevStep} disabled={isSubmitting}>
               <span>←</span> BACK
             </button>
+
             {step === 2 && (
               <button
                 className="btn-nav btn-continue"
@@ -155,6 +154,17 @@ export default function OrderPage() {
                 onClick={nextStep}
               >
                 CONTINUE <span>→</span>
+              </button>
+            )}
+
+            {step === 3 && (
+              <button
+                className="btn-nav btn-continue bg-accent-blue"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                style={{ backgroundColor: 'var(--text-main)', minWidth: '160px' }}
+              >
+                {isSubmitting ? "WAIT..." : "FINALIZE →"}
               </button>
             )}
           </div>
