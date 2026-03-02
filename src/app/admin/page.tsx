@@ -52,91 +52,116 @@ export default function AdminDashboard() {
         );
     }
 
+    const DetailRow = ({ label, value }: { label: string; value: string }) => (
+        <div className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0">
+            <span className="admin-label">{label}</span>
+            <span className="admin-value">{value}</span>
+        </div>
+    );
     const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
 
     return (
-        <div className="container py-8 bg-[#f8f9fa] min-h-screen">
-            <header className="mb-8 flex justify-between items-center">
-                <h1 className="text-lg">ADMIN DASHBOARD</h1>
-                <button
-                    className="text-xs bg-white border px-3 py-1 rounded-full font-bold"
-                    onClick={() => window.location.reload()}
-                >
-                    REFRESH
-                </button>
-            </header>
-
-            <main>
-                {/* Main Card */}
-                <section className="bg-white rounded-3xl p-8 shadow-sm border mb-8 animate-fade-in">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <span className="badge mb-2">{current.status}</span>
-                            <h2 className="text-3xl font-bold">{current.selectedId}</h2>
-                            <p className="text-xs text-sub">{new Date(current.timestamp).toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs font-bold text-sub">TOTAL</p>
-                            <p className="text-2xl font-bold">¥{current.totalPrice.toLocaleString()}</p>
-                        </div>
+        <div className="bg-slate-50 min-h-screen pb-32">
+            <div className="container py-8">
+                <header className="mb-8 flex justify-between items-center">
+                    <h1 className="text-xl font-black tracking-widest text-slate-800">ADMIN DASHBOARD</h1>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                        Last Update: {new Date().toLocaleTimeString()}
                     </div>
+                </header>
 
-                    <div className="grid grid-2 gap-8 mb-8">
-                        <div>
-                            <p className="text-[10px] font-bold text-sub uppercase mb-1">Plan</p>
-                            <p className="font-bold">{current.plan}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-sub uppercase mb-1">Item</p>
-                            <p className="font-bold">{current.item} / {current.itemColor} / {current.itemSize}</p>
-                        </div>
-                    </div>
-
-                    <div className="mb-8">
-                        <p className="text-[10px] font-bold text-sub uppercase mb-3">Threads</p>
-                        <div className="flex gap-6">
-                            {[current.thread1, current.thread2, current.thread3].map((tid, i) => {
-                                const color = getThreadColor(tid);
-                                if (!tid || (current.plan === 'Lite' && i > 0)) return null;
-                                return (
-                                    <div key={i} className="flex flex-col items-center gap-1">
-                                        <div className="w-12 h-12 rounded-full border-2" style={{ backgroundColor: color?.hex }} />
-                                        <span className="text-xs font-bold">{tid}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {current.notes && (
-                        <div className="bg-base-bg p-4 rounded-2xl">
-                            <p className="text-[10px] font-bold text-sub uppercase mb-1">Remarks</p>
-                            <p className="text-sm">{current.notes}</p>
-                        </div>
-                    )}
-                </section>
-
-                {/* Quick Selection */}
-                <h3 className="text-xs font-bold text-sub mb-4 tracking-widest uppercase">Quick Selection (Past 5)</h3>
-                <div className="grid gap-3">
-                    {submissions.map((sub, idx) => (
-                        <div
-                            key={idx}
-                            className={`p-4 rounded-2xl border bg-white flex justify-between items-center cursor-pointer transition-all ${selectedIndex === idx ? "border-primary ring-1 ring-primary" : "opacity-70"}`}
-                            onClick={() => setSelectedIndex(idx)}
-                        >
+                <main>
+                    {/* Main Instruction Sheet */}
+                    <section className="instruction-sheet mb-10 animate-fade-in">
+                        <div className="flex justify-between items-start mb-10">
                             <div>
-                                <p className="font-bold text-sm">{sub.selectedId}</p>
-                                <p className="text-[10px] text-sub">{new Date(sub.timestamp).toLocaleTimeString()}</p>
+                                <span className="admin-badge mb-3">NEW ORDER</span>
+                                <h1 className="text-4xl font-black tracking-tighter text-slate-900">{current.selectedId}</h1>
+                                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">
+                                    {new Date(current.timestamp).toLocaleString('ja-JP')}
+                                </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs font-bold">{sub.plan}</p>
-                                <p className="text-[10px] text-sub">¥{sub.totalPrice.toLocaleString()}</p>
+                                <p className="admin-label mb-1">Total Amount</p>
+                                <p className="text-4xl font-black text-slate-900 font-title">¥{current.totalPrice.toLocaleString()}</p>
+                                <span className="text-[10px] font-bold text-accent-rose uppercase tracking-widest">Tax Included</span>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </main>
+
+                        <div className="grid gap-1 mb-10">
+                            <DetailRow label="Plan" value={current.plan} />
+                            <DetailRow label="Item Type" value={current.item} />
+                            <DetailRow label="Item Color" value={current.itemColor} />
+                            <DetailRow label="Item Size" value={current.itemSize} />
+                        </div>
+
+                        <div className="mb-10">
+                            <h3 className="admin-label mb-4">Required Threads</h3>
+                            <div className="grid gap-3">
+                                {[current.thread1, current.thread2, current.thread3].map((tid, i) => {
+                                    const color = getThreadColor(tid);
+                                    if (!tid || (current.plan === 'Lite' && i > 0)) return null;
+                                    return (
+                                        <div key={i} className="thread-row animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                                            <div className="chip-30" style={{ backgroundColor: color?.hex }} />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black leading-tight text-slate-900">{tid}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{color?.name}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {current.notes && (
+                            <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <h3 className="admin-label mb-2">Remarks / Special Instructions</h3>
+                                <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                    {current.notes}
+                                </p>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Quick Selection List */}
+                    <section>
+                        <h3 className="admin-label mb-4 ml-2">Quick Selection (Past 5)</h3>
+                        <div className="history-list space-y-3">
+                            {submissions.map((sub, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`history-item transition-all ${selectedIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"}`}
+                                    onClick={() => setSelectedIndex(idx)}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-black text-indigo-500">
+                                            {idx + 1}
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-sm text-slate-900">{sub.selectedId}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">{new Date(sub.timestamp).toLocaleTimeString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-900 uppercase">{sub.plan}</p>
+                                        <p className="text-xs font-bold text-slate-400">¥{sub.totalPrice.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            {/* Floating Action Button */}
+            <button
+                className="admin-fab"
+                onClick={() => window.location.reload()}
+                title="Refresh Data"
+            >
+                <span className="text-2xl font-black">↺</span>
+            </button>
         </div>
     );
 }
