@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useOrderForm } from "@/hooks/useOrderForm";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
 import Step3_Preview from "@/components/Step3_Preview";
 import { GAS_URL } from "@/constants/gas";
 
+// Exported default wraps inner component in Suspense to satisfy Next.js prerender requirements for useSearchParams
 export default function OrderPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold tracking-widest text-sub">LOADING...</div>}>
+      <OrderPageInner />
+    </Suspense>
+  );
+}
+
+function OrderPageInner() {
   const {
     step,
     setStep,
@@ -22,6 +32,15 @@ export default function OrderPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const searchParams = useSearchParams();
+
+  // URL Parameter Handling
+  useEffect(() => {
+    const idParam = searchParams.get("id");
+    if (idParam && !order.selectedId) {
+      updateOrder({ selectedId: idParam });
+    }
+  }, [searchParams, updateOrder, order.selectedId]);
 
   // Scroll to top on step change
   useEffect(() => {

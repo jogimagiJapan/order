@@ -21,11 +21,12 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "SEW THE SOUND | Order Form",
+  title: "SEW THE SOUND",
   description: "Custom embroidery order form based on your sound.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
+    title: "SEW THE SOUND",
   },
 };
 
@@ -37,6 +38,8 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
