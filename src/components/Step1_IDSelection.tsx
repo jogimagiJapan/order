@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
 
-/** Strip date prefix from IDs like "20260305_171923_name" → "171923_name" */
+/** Strip date prefix: "20260305_171923_name" → "171923_name" */
 function formatDisplayId(id: string): string {
     const parts = id.split("_");
-    // If format is YYYYMMDD_HHMMSS_name, remove the first segment (date)
     if (parts.length >= 3 && /^\d{8}$/.test(parts[0])) {
         return parts.slice(1).join("_");
     }
@@ -27,58 +26,37 @@ export default function Step1_IDSelection({
     const [manualId, setManualId] = useState("");
 
     const handleManualChange = (val: string) => {
-        // Strip spaces and force uppercase
         const cleaned = val.replace(/\s/g, "").toUpperCase();
         setManualId(cleaned);
         onSelect(cleaned);
     };
 
-    // Determine if a file tile is selected (vs manually entered)
     const isFileTileSelected = files.some(f => f.friendlyId === selectedId);
-    // Display value for manual input: show formatted ID if QR-filled, else raw manualId
-    const manualDisplayValue = manualId || (!isFileTileSelected && selectedId ? selectedId : "");
+    const isManuallyEntered = !isFileTileSelected && !!selectedId && !fromQR;
 
     return (
-        <div className="animate-fade-in pb-20">
+        <div className="animate-fade-in" style={{ paddingBottom: "100px" }}>
             <header className="mb-10 text-center">
                 <h2 className="text-2xl mb-2 mt-6">01. Select ID</h2>
                 <p className="text-sub">録音済みのファイルIDを選択してください</p>
             </header>
 
-            {/* Manual Entry — displayed first, same tile-style padding */}
-            <div className="mb-6">
-                <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-2 block">
-                    Manual Entry
-                </span>
-                <div className={`relative transition-all duration-200 ${!isFileTileSelected && selectedId ? "ring-2 ring-[#4f7ef8] rounded-xl" : ""}`}>
-                    <input
-                        type="text"
-                        inputMode="none"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        className="w-full px-4 py-5 bg-white border border-border rounded-xl text-lg font-bold tracking-tight focus:border-[#4f7ef8] outline-none transition-all"
-                        placeholder="IDを手動入力 (例: 20260305_171923_name)"
-                        value={manualDisplayValue}
-                        onChange={(e) => handleManualChange(e.target.value)}
-                    />
-                    {!isFileTileSelected && selectedId && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black tracking-widest text-[#4f7ef8] uppercase">
-                            {fromQR ? "QR" : "✓"}
+            {/* QR Pre-filled tile — shown at top when ID came from QR */}
+            {fromQR && selectedId && (
+                <div className="mb-6">
+                    <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-2 block">
+                        QR読み取り済み
+                    </span>
+                    <div className="tile active" style={{ cursor: "default" }}>
+                        <span className="text-lg font-bold tracking-tight">
+                            {formatDisplayId(selectedId)}
                         </span>
-                    )}
+                    </div>
                 </div>
-                {/* Formatted preview when QR-filled */}
-                {fromQR && selectedId && (
-                    <p className="text-[10px] text-[#4f7ef8] font-bold mt-2 px-1 tracking-wide animate-fade-in">
-                        QR読み取り済 → {formatDisplayId(selectedId)}
-                    </p>
-                )}
-            </div>
+            )}
 
-            {/* Latest Files */}
-            <div className="grid gap-4 mb-10">
+            {/* Latest Files List */}
+            <div className="grid gap-4 mb-8">
                 <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-1">
                     Latest Files
                 </span>
@@ -86,7 +64,7 @@ export default function Step1_IDSelection({
                     files.map((file) => (
                         <div
                             key={file.friendlyId}
-                            className={`tile ${selectedId === file.friendlyId ? "active" : ""}`}
+                            className={`tile ${!fromQR && selectedId === file.friendlyId ? "active" : ""}`}
                             onClick={() => {
                                 setManualId("");
                                 onSelect(file.friendlyId);
@@ -104,22 +82,52 @@ export default function Step1_IDSelection({
                 )}
             </div>
 
-            {selectedId && (
-                <div className="flex justify-center animate-fade-in">
-                    <button
-                        className="submit-btn"
-                        style={fromQR ? {
-                            backgroundColor: "#4f7ef8",
-                            borderColor: "#4f7ef8",
-                            color: "#fff",
-                            boxShadow: "0 8px 24px rgba(79, 126, 248, 0.4)",
-                        } : {}}
-                        onClick={() => onNext()}
-                    >
-                        {fromQR ? "QR ID 確認 →" : "CONTINUE →"}
-                    </button>
-                </div>
-            )}
+            {/* Manual Entry — at the bottom of the list */}
+            <div className="mb-4">
+                <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-2 block">
+                    Manual Entry
+                </span>
+                <input
+                    type="text"
+                    inputMode="url"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    className={`w-full px-4 py-4 bg-white border rounded-xl text-base font-bold tracking-tight outline-none transition-all ${isManuallyEntered ? "border-[#4f7ef8] ring-1 ring-[#4f7ef8]" : "border-border"}`}
+                    placeholder="IDを手動入力 (例: 20260305_171923_name)"
+                    value={manualId || (isManuallyEntered ? selectedId : "")}
+                    onChange={(e) => handleManualChange(e.target.value)}
+                />
+            </div>
+
+            {/* Sticky confirm button — always visible at screen bottom */}
+            <div
+                style={{
+                    position: "fixed",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: "16px 20px",
+                    background: "linear-gradient(to top, var(--base-bg) 75%, transparent)",
+                    zIndex: 50,
+                }}
+            >
+                <button
+                    className="submit-btn w-full"
+                    disabled={!selectedId}
+                    style={selectedId ? {
+                        backgroundColor: "#4f7ef8",
+                        borderColor: "#4f7ef8",
+                        color: "#fff",
+                        boxShadow: "0 8px 24px rgba(79, 126, 248, 0.35)",
+                        opacity: 1,
+                    } : { opacity: 0.3, cursor: "not-allowed" }}
+                    onClick={() => selectedId && onNext()}
+                >
+                    このIDで進む →
+                </button>
+            </div>
         </div>
     );
 }
