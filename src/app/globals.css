@@ -92,6 +92,18 @@ h3 {
   margin-bottom: 32px;
 }
 
+.mb-10 {
+  margin-bottom: 40px;
+}
+
+.mb-12 {
+  margin-bottom: 48px;
+}
+
+.mb-16 {
+  margin-bottom: 64px;
+}
+
 .text-center {
   text-align: center;
 }
