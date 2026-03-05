@@ -26,7 +26,8 @@ export default function Step1_IDSelection({
     const [manualId, setManualId] = useState("");
 
     const handleManualChange = (val: string) => {
-        const cleaned = val.replace(/\s/g, "").toUpperCase();
+        // Remove all whitespace to prevent autocomplete artifacts
+        const cleaned = val.replace(/\s/g, "");
         setManualId(cleaned);
         onSelect(cleaned);
     };
@@ -35,13 +36,13 @@ export default function Step1_IDSelection({
     const isManuallyEntered = !isFileTileSelected && !!selectedId && !fromQR;
 
     return (
-        <div className="animate-fade-in" style={{ paddingBottom: "100px" }}>
+        <div className="animate-fade-in" style={{ paddingBottom: "110px" }}>
             <header className="mb-10 text-center">
                 <h2 className="text-2xl mb-2 mt-6">01. Select ID</h2>
                 <p className="text-sub">録音済みのファイルIDを選択してください</p>
             </header>
 
-            {/* QR Pre-filled tile — shown at top when ID came from QR */}
+            {/* QR Pre-filled tile */}
             {fromQR && selectedId && (
                 <div className="mb-6">
                     <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-2 block">
@@ -82,26 +83,26 @@ export default function Step1_IDSelection({
                 )}
             </div>
 
-            {/* Manual Entry — at the bottom of the list */}
+            {/* ID入力 — manual entry at bottom of list */}
             <div className="mb-4">
                 <span className="text-[10px] font-black tracking-widest text-sub uppercase px-1 mb-2 block">
-                    Manual Entry
+                    ID入力
                 </span>
-                <input
-                    type="text"
-                    inputMode="url"
+                <textarea
+                    rows={3}
                     autoComplete="off"
                     autoCorrect="off"
-                    autoCapitalize="characters"
+                    autoCapitalize="none"
                     spellCheck={false}
-                    className={`w-full px-4 py-4 bg-white border rounded-xl text-base font-bold tracking-tight outline-none transition-all ${isManuallyEntered ? "border-[#4f7ef8] ring-1 ring-[#4f7ef8]" : "border-border"}`}
-                    placeholder="IDを手動入力 (例: 20260305_171923_name)"
+                    data-form-type="other"
+                    className={`w-full px-4 py-4 bg-white border rounded-xl text-base font-bold tracking-tight outline-none transition-all resize-none font-mono ${isManuallyEntered ? "border-[#4f7ef8] ring-1 ring-[#4f7ef8]" : "border-border"}`}
+                    placeholder="20250714_164445_name"
                     value={manualId || (isManuallyEntered ? selectedId : "")}
                     onChange={(e) => handleManualChange(e.target.value)}
                 />
             </div>
 
-            {/* Sticky confirm button — always visible at screen bottom */}
+            {/* Sticky confirm button */}
             <div
                 style={{
                     position: "fixed",
@@ -117,15 +118,15 @@ export default function Step1_IDSelection({
                     className="submit-btn w-full"
                     disabled={!selectedId}
                     style={selectedId ? {
-                        backgroundColor: "#4f7ef8",
-                        borderColor: "#4f7ef8",
+                        backgroundColor: "#f97316",
+                        borderColor: "#f97316",
                         color: "#fff",
-                        boxShadow: "0 8px 24px rgba(79, 126, 248, 0.35)",
+                        boxShadow: "0 8px 24px rgba(249, 115, 22, 0.35)",
                         opacity: 1,
                     } : { opacity: 0.3, cursor: "not-allowed" }}
                     onClick={() => selectedId && onNext()}
                 >
-                    このIDで進む →
+                    このIDで進む
                 </button>
             </div>
         </div>
