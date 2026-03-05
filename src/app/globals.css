@@ -146,10 +146,10 @@ h3 {
 }
 
 .tile.active {
-  background-color: var(--text-main);
-  color: var(--card-bg);
-  border-color: var(--text-main);
-  box-shadow: 0 8px 16px rgba(44, 62, 80, 0.15);
+  background-color: #4f7ef8;
+  color: #ffffff;
+  border-color: #4f7ef8;
+  box-shadow: 0 8px 20px rgba(79, 126, 248, 0.3);
 }
 
 /* Thread Selection */

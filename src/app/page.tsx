@@ -32,6 +32,7 @@ function OrderPageInner() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [fromQR, setFromQR] = useState(false);
   const searchParams = useSearchParams();
 
   // URL Parameter Handling
@@ -39,6 +40,7 @@ function OrderPageInner() {
     const idParam = searchParams.get("id");
     if (idParam && !order.selectedId) {
       updateOrder({ selectedId: idParam });
+      setFromQR(true);
     }
   }, [searchParams, updateOrder, order.selectedId]);
 
@@ -141,7 +143,9 @@ function OrderPageInner() {
             <Step1_IDSelection
               files={files}
               selectedId={order.selectedId}
+              fromQR={fromQR}
               onSelect={(id) => {
+                setFromQR(false);
                 updateOrder({ selectedId: id });
               }}
               onNext={nextStep}
