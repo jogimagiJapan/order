@@ -302,7 +302,7 @@ h3 {
 }
 
 .btn-continue {
-  background-color: var(--text-main);
+  background-color: #c06c84;
   color: var(--card-bg);
   box-shadow: 0 10px 20px rgba(44, 62, 80, 0.15);
 }

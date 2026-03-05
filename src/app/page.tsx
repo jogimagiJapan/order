@@ -109,9 +109,10 @@ function OrderPageInner() {
         </p>
         <button
           className="submit-btn mb-6"
+          style={{ backgroundColor: "#c06c84" }}
           onClick={() => window.location.href = "https://sts-process-visualization.jogimagi.com/"}
         >
-          VIEW MAKING PROCESS
+          音の刺繍について
         </button>
         <button
           className="text-sub underline text-xs tracking-widest opacity-60 hover:opacity-100 transition-opacity"
@@ -188,10 +189,10 @@ function OrderPageInner() {
 
             {step === 3 && (
               <button
-                className="btn-nav btn-continue bg-accent-blue"
+                className="btn-nav btn-continue"
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                style={{ backgroundColor: 'var(--text-main)', minWidth: '160px' }}
+                style={{ backgroundColor: '#c06c84', minWidth: '160px' }}
               >
                 {isSubmitting ? "WAIT..." : "決定 →"}
               </button>
