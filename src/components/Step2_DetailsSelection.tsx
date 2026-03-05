@@ -105,7 +105,7 @@ export default function Step2_DetailsSelection({
                 <p className="text-sub">デザインと詳細を選択してください</p>
             </header>
 
-            <section className="mb-10" ref={plansRef}>
+            <section className="mb-16" ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-3">
                     {plans.map((p) => (
@@ -127,7 +127,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className="mb-10" ref={itemsRef}>
+            <section className="mb-16" ref={itemsRef}>
                 <h3 className="section-title">02-2. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
@@ -150,7 +150,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <div className="grid grid-2 mb-10" ref={colorSizeRef}>
+            <div className="grid grid-2 mb-16" ref={colorSizeRef}>
                 <section>
                     <h3 className="section-title">02-3. COLOR</h3>
                     <div className="grid">
@@ -204,7 +204,7 @@ export default function Step2_DetailsSelection({
                 </section>
             </div>
 
-            <section className="mb-10" ref={threadsRef}>
+            <section className="mb-16" ref={threadsRef}>
                 <h3 className="section-title">02-5. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector
