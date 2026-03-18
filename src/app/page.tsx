@@ -52,7 +52,12 @@ function OrderPageInner() {
   const handleSubmit = async () => {
     // Temporary debug alert to identify the root cause of ID truncation
     if (typeof window !== "undefined") {
-      window.alert("送信データ確認: " + JSON.stringify(order));
+      window.alert(
+        `【デバッグ情報】\n` +
+        `GAS Version: ${files[0]?.hasOwnProperty('displayId') ? 'New' : 'Old (RE-DEPLOY REQUIRED)'}\n` +
+        `ID in State: ${order.selectedId}\n` +
+        `Raw Order: ${JSON.stringify(order)}`
+      );
     }
     setIsSubmitting(true);
     try {
