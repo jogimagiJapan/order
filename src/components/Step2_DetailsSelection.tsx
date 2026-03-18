@@ -15,7 +15,8 @@ export default function Step2_DetailsSelection({
 }) {
     const plansRef = useRef<HTMLElement>(null);
     const itemsRef = useRef<HTMLElement>(null);
-    const colorSizeRef = useRef<HTMLDivElement>(null);
+    const colorRef = useRef<HTMLElement>(null);
+    const sizeRef = useRef<HTMLElement>(null);
     const threadsRef = useRef<HTMLElement>(null);
     const remarksRef = useRef<HTMLElement>(null);
 
@@ -31,7 +32,11 @@ export default function Step2_DetailsSelection({
     }, [order.plan, order.item]);
 
     useEffect(() => {
-        if (order.item && (!order.itemColor || !order.itemSize)) scrollTo(colorSizeRef);
+        if (order.item && !order.itemColor) scrollTo(colorRef);
+    }, [order.item, order.itemColor]);
+
+    useEffect(() => {
+        if (order.item && order.itemColor && !order.itemSize) scrollTo(sizeRef);
     }, [order.item, order.itemColor, order.itemSize]);
 
     useEffect(() => {
@@ -158,7 +163,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorSizeRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorRef}>
                 <h3 className="section-title">02-3. COLOR</h3>
                 <div className="grid grid-2">
                     {!order.item ? (
@@ -184,7 +189,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={sizeRef}>
                 <h3 className="section-title">02-4. SIZE</h3>
                 <div className="grid grid-2">
                     {!order.item ? (

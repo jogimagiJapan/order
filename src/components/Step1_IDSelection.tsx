@@ -98,7 +98,7 @@ export default function Step1_IDSelection({
                         data-form-type="other"
                         className={`w-full px-4 py-4 bg-white border rounded-xl text-base font-bold tracking-tight outline-none transition-all resize-none font-mono ${isManuallyEntered ? "border-[#4f7ef8] ring-1 ring-[#4f7ef8]" : "border-border"}`}
                         placeholder="20250714_164445_name"
-                        value={manualId ? formatDisplayId(manualId) : (isManuallyEntered ? formatDisplayId(selectedId) : "")}
+                        value={manualId || (isManuallyEntered ? selectedId : "")}
                         onChange={(e) => handleManualChange(e.target.value)}
                     />
                 </div>
