@@ -71,6 +71,35 @@ h3 {
   animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+@keyframes pulse-focus {
+  0% {
+    box-shadow: 0 0 0 0 rgba(192, 108, 132, 0.2);
+    border-color: var(--border);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(192, 108, 132, 0.1);
+    border-color: var(--accent-rose);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(192, 108, 132, 0.2);
+    border-color: var(--border);
+  }
+}
+
+@keyframes section-attention {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.focused-section {
+  border: 1px solid var(--accent-rose);
+  border-radius: var(--radius);
+  padding: 16px;
+  animation: pulse-focus 2s infinite ease-in-out, section-attention 1s ease-out 1;
+  background-color: rgba(192, 108, 132, 0.02);
+  transition: all 0.5s ease;
+}
+
 /* Utilities */
 .mb-1 {
   margin-bottom: 4px;
@@ -220,8 +249,15 @@ h3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  max-width: 360px;
+  max-width: 480px;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .thread-grid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 600px;
+  }
 }
 
 .color-chip-large {
@@ -535,6 +571,38 @@ textarea:focus {
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   padding: 16px 0;
+}
+
+/* PC Review Layout */
+@media (min-width: 1024px) {
+  .preview-grid-pc {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 24px;
+    align-items: start;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  /* Force container to be wider on PC for the review step */
+  .container-wide {
+    max-width: 1100px !important;
+  }
+  
+  .review-left {
+    grid-row: 1 / span 2;
+  }
+  
+  .review-right-top {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  
+  .review-right-bottom {
+    grid-column: 2;
+    grid-row: 2;
+  }
 }
 
 .thread-preview-item {

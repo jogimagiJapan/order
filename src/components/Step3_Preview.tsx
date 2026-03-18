@@ -24,9 +24,9 @@ export default function Step3_Preview({
                 <p className="text-sub">ご注文内容の最終確認</p>
             </header>
 
-            <div className="grid gap-8">
+            <div className="grid gap-8 preview-grid-pc">
                 {/* Order Details List */}
-                <div className="thread-card shadow-sm">
+                <div className="thread-card shadow-sm review-left">
                     <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-4 border-b border-border pb-3 uppercase">
                         Order Details
                     </h3>
@@ -40,7 +40,7 @@ export default function Step3_Preview({
                 </div>
 
                 {/* Thread Selection with Chips */}
-                <div className="thread-card shadow-sm">
+                <div className="thread-card shadow-sm review-right-top">
                     <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-6 border-b border-border pb-3 uppercase">
                         Thread Selection
                     </h3>
@@ -62,7 +62,7 @@ export default function Step3_Preview({
                 </div>
 
                 {/* Remarks and Total Section */}
-                <div className="thread-card shadow-sm">
+                <div className="thread-card shadow-sm review-right-bottom">
                     {order.notes && (
                         <div className="mb-6 px-1">
                             <h3 className="text-[9px] font-black tracking-widest text-accent-gold mb-2 uppercase">Remarks</h3>

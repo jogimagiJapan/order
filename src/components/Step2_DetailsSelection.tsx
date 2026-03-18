@@ -98,14 +98,21 @@ export default function Step2_DetailsSelection({
 
     const threadCount = order.plan === "Lite" ? 1 : 3;
 
+    // Determine which section should be highlighted to guide the user
+    let activeSection = 0;
+    if (!order.plan) activeSection = 1;
+    else if (!order.item) activeSection = 2;
+    else if (!order.itemColor || !order.itemSize) activeSection = 3;
+    else if (order.threads.some(t => !t)) activeSection = 5;
+
     return (
-        <div className="animate-fade-in pb-20">
+        <div className="animate-fade-in pb-20 px-1">
             <header className="mb-10 text-center">
                 <h2 className="text-2xl mb-2 mt-6">02. Customize</h2>
                 <p className="text-sub">デザインと詳細を選択してください</p>
             </header>
 
-            <section className="mb-16" ref={plansRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? 'focused-section' : ''}`} ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-3">
                     {plans.map((p) => (
@@ -127,7 +134,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className="mb-16" ref={itemsRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? 'focused-section' : ''}`} ref={itemsRef}>
                 <h3 className="section-title">02-2. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
@@ -150,7 +157,7 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <div className="mb-16" ref={colorSizeRef}>
+            <div className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorSizeRef}>
                 <section className="mb-10">
                     <h3 className="section-title">02-3. COLOR</h3>
                     <div className="grid grid-2">
@@ -204,7 +211,7 @@ export default function Step2_DetailsSelection({
                 </section>
             </div>
 
-            <section className="mb-16" ref={threadsRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={threadsRef}>
                 <h3 className="section-title">02-5. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector

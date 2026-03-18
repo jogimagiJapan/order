@@ -126,7 +126,7 @@ function OrderPageInner() {
 
   return (
     <div className="min-h-screen bg-base-bg">
-      <div className="container">
+      <div className={`container ${step === 3 ? "container-wide" : ""}`}>
         <header className="mb-12 text-center pt-8">
           <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
           <div className="flex justify-center gap-3 mt-6">
