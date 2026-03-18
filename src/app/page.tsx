@@ -52,16 +52,13 @@ function OrderPageInner() {
   const handleSubmit = async () => {
     // Temporary debug alert to identify the root cause of ID truncation
     if (typeof window !== "undefined") {
-      const isNewGas = files[0]?.hasOwnProperty('displayId');
+      const isNewGas = (files as any).version_tag === "2026-03-19-FINAL-V1";
       window.alert(
-        `【重要：デバッグ診断結果】\n` +
-        `結果: ${isNewGas ? '成功（新版）' : '失敗（旧版が稼働中！）'}\n\n` +
-        `現在のURL: ${GAS_URL}\n` +
-        `※このURL先ではまだ「短縮ID」が生成されています。\n\n` +
-        `対策: \n` +
-        `1. GASエディタでファイルを保存(Cmd+S)してください。\n` +
-        `2. 「新しいバージョン」としてデプロイを更新してください。\n\n` +
-        `送信予定データ:\n${JSON.stringify(order, null, 2)}`
+        `【デバッグ診断結果】\n` +
+        `Version: ${(files as any).version_tag || 'Unknown (OLD)'}\n` +
+        `Files Count: ${(files as any).files_count || 0}\n\n` +
+        `ID in State: ${order.selectedId}\n` +
+        `Raw Order: ${JSON.stringify(order)}`
       );
     }
     setIsSubmitting(true);

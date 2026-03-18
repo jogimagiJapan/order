@@ -47,7 +47,7 @@ export function useOrderForm() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await fetch(GAS_URL);
+                const res = await fetch(`${GAS_URL}${GAS_URL.includes("?") ? "&" : "?"}_=${Date.now()}`);
                 const data = await res.json();
                 setFiles(data.latestFiles);
                 setMasterData(data.masterData);
