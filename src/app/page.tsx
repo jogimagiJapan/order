@@ -54,7 +54,9 @@ function OrderPageInner() {
     if (typeof window !== "undefined") {
       window.alert(
         `【デバッグ情報】\n` +
-        `GAS Version: ${files[0]?.hasOwnProperty('displayId') ? 'New' : 'Old (RE-DEPLOY REQUIRED)'}\n` +
+        `Target GAS URL: ${GAS_URL}\n` +
+        `GAS Version Check: ${files[0]?.hasOwnProperty('displayId') ? 'New' : 'Old (RE-DEPLOY REQUIRED)'}\n` +
+        `First File Data: ${JSON.stringify(files[0])}\n` +
         `ID in State: ${order.selectedId}\n` +
         `Raw Order: ${JSON.stringify(order)}`
       );
