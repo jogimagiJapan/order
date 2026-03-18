@@ -50,6 +50,10 @@ function OrderPageInner() {
   }, [step]);
 
   const handleSubmit = async () => {
+    // Temporary debug alert to identify the root cause of ID truncation
+    if (typeof window !== "undefined") {
+      window.alert("送信データ確認: " + JSON.stringify(order));
+    }
     setIsSubmitting(true);
     try {
       // Map threads array to thread1, 2, 3 for GAS backend compatibility
