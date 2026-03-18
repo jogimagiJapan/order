@@ -28,6 +28,7 @@ function OrderPageInner() {
     updateOrder,
     nextStep,
     prevStep,
+    debugInfo,
   } = useOrderForm();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,13 +53,12 @@ function OrderPageInner() {
   const handleSubmit = async () => {
     // Temporary debug alert to identify the root cause of ID truncation
     if (typeof window !== "undefined") {
-      const isNewGas = (files as any).version_tag === "2026-03-19-FINAL-V1";
       window.alert(
         `【デバッグ診断結果】\n` +
-        `Version: ${(files as any).version_tag || 'Unknown (OLD)'}\n` +
-        `Files Count: ${(files as any).files_count || 0}\n\n` +
+        `Version: ${debugInfo.version || 'Unknown (OLD)'}\n` +
+        `Files Count: ${debugInfo.count || 0}\n\n` +
         `ID in State: ${order.selectedId}\n` +
-        `Raw Order: ${JSON.stringify(order)}`
+        `Raw Order: ${JSON.stringify(order, null, 2)}`
       );
     }
     setIsSubmitting(true);
