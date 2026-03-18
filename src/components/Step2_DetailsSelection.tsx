@@ -150,12 +150,12 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <div className="grid grid-2 mb-16" ref={colorSizeRef}>
-                <section>
+            <div className="mb-16" ref={colorSizeRef}>
+                <section className="mb-10">
                     <h3 className="section-title">02-3. COLOR</h3>
-                    <div className="grid">
+                    <div className="grid grid-2">
                         {!order.item ? (
-                            <div className="tile opacity-30 cursor-not-allowed">
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
                                 <span className="text-[10px] italic">Select item first</span>
                             </div>
                         ) : filteredColors.length > 0 ? (
@@ -170,7 +170,7 @@ export default function Step2_DetailsSelection({
                                 </div>
                             ))
                         ) : (
-                            <div className="tile opacity-30 cursor-not-allowed">
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
                                 <span className="text-[10px] italic">No colors</span>
                             </div>
                         )}
@@ -179,9 +179,9 @@ export default function Step2_DetailsSelection({
 
                 <section>
                     <h3 className="section-title">02-4. SIZE</h3>
-                    <div className="grid">
+                    <div className="grid grid-2">
                         {!order.item ? (
-                            <div className="tile opacity-30 cursor-not-allowed">
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
                                 <span className="text-[10px] italic">Select item first</span>
                             </div>
                         ) : filteredSizes.length > 0 ? (
@@ -196,7 +196,7 @@ export default function Step2_DetailsSelection({
                                 </div>
                             ))
                         ) : (
-                            <div className="tile opacity-30 cursor-not-allowed">
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
                                 <span className="text-[10px] italic">No sizes</span>
                             </div>
                         )}
