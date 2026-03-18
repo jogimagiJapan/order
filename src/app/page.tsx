@@ -50,6 +50,20 @@ function OrderPageInner() {
   }, [step]);
 
   const handleSubmit = async () => {
+    // Temporary debug alert to identify the root cause of ID truncation
+    if (typeof window !== "undefined") {
+      const isNewGas = files[0]?.hasOwnProperty('displayId');
+      window.alert(
+        `【重要：デバッグ診断結果】\n` +
+        `結果: ${isNewGas ? '成功（新版）' : '失敗（旧版が稼働中！）'}\n\n` +
+        `現在のURL: ${GAS_URL}\n` +
+        `※このURL先ではまだ「短縮ID」が生成されています。\n\n` +
+        `対策: \n` +
+        `1. GASエディタでファイルを保存(Cmd+S)してください。\n` +
+        `2. 「新しいバージョン」としてデプロイを更新してください。\n\n` +
+        `送信予定データ:\n${JSON.stringify(order, null, 2)}`
+      );
+    }
     setIsSubmitting(true);
     try {
       // Map threads array to thread1, 2, 3 for GAS backend compatibility
