@@ -102,7 +102,8 @@ export default function Step2_DetailsSelection({
     let activeSection = 0;
     if (!order.plan) activeSection = 1;
     else if (!order.item) activeSection = 2;
-    else if (!order.itemColor || !order.itemSize) activeSection = 3;
+    else if (!order.itemColor) activeSection = 3;
+    else if (!order.itemSize) activeSection = 4;
     else if (order.threads.some(t => !t)) activeSection = 5;
 
     return (
@@ -157,59 +158,57 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <div className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorSizeRef}>
-                <section className="mb-10">
-                    <h3 className="section-title">02-3. COLOR</h3>
-                    <div className="grid grid-2">
-                        {!order.item ? (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">Select item first</span>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorSizeRef}>
+                <h3 className="section-title">02-3. COLOR</h3>
+                <div className="grid grid-2">
+                    {!order.item ? (
+                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                            <span className="text-[10px] italic">Select item first</span>
+                        </div>
+                    ) : filteredColors.length > 0 ? (
+                        filteredColors.map((c) => (
+                            <div
+                                key={c.name}
+                                className={`tile ${order.itemColor === c.name ? "active" : ""}`}
+                                onClick={() => onUpdate({ itemColor: c.name })}
+                            >
+                                <span className="text-sm font-bold">{c.name}</span>
+                                {filteredColors.length === 1 && <span className="badge">Auto-Selected</span>}
                             </div>
-                        ) : filteredColors.length > 0 ? (
-                            filteredColors.map((c) => (
-                                <div
-                                    key={c.name}
-                                    className={`tile ${order.itemColor === c.name ? "active" : ""}`}
-                                    onClick={() => onUpdate({ itemColor: c.name })}
-                                >
-                                    <span className="text-sm font-bold">{c.name}</span>
-                                    {filteredColors.length === 1 && <span className="badge">Auto-Selected</span>}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">No colors</span>
-                            </div>
-                        )}
-                    </div>
-                </section>
+                        ))
+                    ) : (
+                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                            <span className="text-[10px] italic">No colors</span>
+                        </div>
+                    )}
+                </div>
+            </section>
 
-                <section>
-                    <h3 className="section-title">02-4. SIZE</h3>
-                    <div className="grid grid-2">
-                        {!order.item ? (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">Select item first</span>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`}>
+                <h3 className="section-title">02-4. SIZE</h3>
+                <div className="grid grid-2">
+                    {!order.item ? (
+                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                            <span className="text-[10px] italic">Select item first</span>
+                        </div>
+                    ) : filteredSizes.length > 0 ? (
+                        filteredSizes.map((s) => (
+                            <div
+                                key={s.name}
+                                className={`tile ${order.itemSize === s.name ? "active" : ""}`}
+                                onClick={() => onUpdate({ itemSize: s.name })}
+                            >
+                                <span className="text-sm font-bold">{s.name}</span>
+                                {filteredSizes.length === 1 && <span className="badge">Auto-Selected</span>}
                             </div>
-                        ) : filteredSizes.length > 0 ? (
-                            filteredSizes.map((s) => (
-                                <div
-                                    key={s.name}
-                                    className={`tile ${order.itemSize === s.name ? "active" : ""}`}
-                                    onClick={() => onUpdate({ itemSize: s.name })}
-                                >
-                                    <span className="text-sm font-bold">{s.name}</span>
-                                    {filteredSizes.length === 1 && <span className="badge">Auto-Selected</span>}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">No sizes</span>
-                            </div>
-                        )}
-                    </div>
-                </section>
-            </div>
+                        ))
+                    ) : (
+                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                            <span className="text-[10px] italic">No sizes</span>
+                        </div>
+                    )}
+                </div>
+            </section>
 
             <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={threadsRef}>
                 <h3 className="section-title">02-5. THREAD COLORS</h3>
