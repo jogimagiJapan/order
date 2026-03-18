@@ -1,14 +1,7 @@
 "use client";
 import { useState } from "react";
 
-/** Strip date prefix: "20260305_171923_name" → "171923_name" */
-function formatDisplayId(id: string): string {
-    const parts = id.split("_");
-    if (parts.length >= 3 && /^\d{8}$/.test(parts[0])) {
-        return parts.slice(1).join("_");
-    }
-    return id;
-}
+/** Use displayId from GAS for labels, but friendlyId (full) for selection. */
 
 export default function Step1_IDSelection({
     files,
@@ -17,7 +10,7 @@ export default function Step1_IDSelection({
     selectedId,
     fromQR = false,
 }: {
-    files: { fullName: string; friendlyId: string; url: string }[];
+    files: { fullName: string; friendlyId: string; url: string; displayId?: string }[];
     onSelect: (id: string) => void;
     onNext: () => void;
     selectedId: string;
@@ -51,7 +44,7 @@ export default function Step1_IDSelection({
                         </span>
                         <div className="tile active" style={{ cursor: "default" }}>
                             <span className="text-lg font-bold tracking-tight">
-                                {formatDisplayId(selectedId)}
+                                {selectedId.replace(/^\d{8}_/, "")}
                             </span>
                         </div>
                     </div>
@@ -73,7 +66,7 @@ export default function Step1_IDSelection({
                                 }}
                             >
                                 <span className="text-lg font-bold tracking-tight">
-                                    {formatDisplayId(file.friendlyId)}
+                                    {file.displayId || file.friendlyId}
                                 </span>
                             </div>
                         ))
