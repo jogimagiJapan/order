@@ -6,7 +6,7 @@ import { useOrderForm } from "@/hooks/useOrderForm";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
 import Step3_Preview from "@/components/Step3_Preview";
-import { GAS_URL } from "@/constants/gas";
+import { ACTIVE_GAS_URL } from "@/constants/gas";
 
 // Exported default wraps inner component in Suspense to satisfy Next.js prerender requirements for useSearchParams
 export default function OrderPage() {
@@ -53,7 +53,7 @@ function OrderPageInner() {
     // ULTIMATE DEBUG ALERT (BUILD: 2026-03-19 09:15)
     if (typeof window !== "undefined") {
       const debugInfo = {
-        activeGASUrl: GAS_URL,
+        activeGASUrl: ACTIVE_GAS_URL,
         firstFileFromGAS: files[0] || "No files loaded",
         orderStateBeforeSend: order,
         submissionData: {
@@ -75,7 +75,7 @@ function OrderPageInner() {
         thread3: order.threads[2] || "",
       };
 
-      const response = await fetch(GAS_URL, {
+      const response = await fetch(ACTIVE_GAS_URL, {
         method: "POST",
         body: JSON.stringify(submissionData),
       });

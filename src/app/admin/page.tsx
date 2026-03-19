@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { THREAD_COLORS } from "@/constants/colors";
-import { GAS_URL } from "@/constants/gas";
+import { ACTIVE_GAS_URL } from "@/constants/gas";
 
 interface Submission {
     timestamp: string;
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     async function fetchData() {
         setRefreshing(true);
         try {
-            const res = await fetch(GAS_URL);
+            const res = await fetch(ACTIVE_GAS_URL);
             const data = await res.json();
             setSubmissions(data.submissions || []);
         } catch (err) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GAS_URL } from "@/constants/gas";
+import { ACTIVE_GAS_URL } from "@/constants/gas";
 
 export type Plan = "Lite" | "Standard" | "Limited";
 
@@ -47,7 +47,7 @@ export function useOrderForm() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await fetch(GAS_URL);
+                const res = await fetch(ACTIVE_GAS_URL);
                 const data = await res.json();
                 setFiles(data.latestFiles);
                 setMasterData(data.masterData);
