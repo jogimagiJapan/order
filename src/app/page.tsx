@@ -28,7 +28,6 @@ function OrderPageInner() {
     updateOrder,
     nextStep,
     prevStep,
-    debugInfo,
   } = useOrderForm();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,15 +50,20 @@ function OrderPageInner() {
   }, [step]);
 
   const handleSubmit = async () => {
-    // Temporary debug alert to identify the root cause of ID truncation
+    // ULTIMATE DEBUG ALERT (BUILD: 2026-03-19 09:15)
     if (typeof window !== "undefined") {
-      window.alert(
-        `【デバッグ診断結果】\n` +
-        `Version: ${debugInfo.version || 'Unknown (OLD)'}\n` +
-        `Files Count: ${debugInfo.count || 0}\n\n` +
-        `ID in State: ${order.selectedId}\n` +
-        `Raw Order: ${JSON.stringify(order, null, 2)}`
-      );
+      const debugInfo = {
+        activeGASUrl: GAS_URL,
+        firstFileFromGAS: files[0] || "No files loaded",
+        orderStateBeforeSend: order,
+        submissionData: {
+          ...order,
+          thread1: order.threads[0] || "",
+          thread2: order.threads[1] || "",
+          thread3: order.threads[2] || "",
+        }
+      };
+      window.alert("【ULTIMATE DEBUG】\n" + JSON.stringify(debugInfo, null, 2));
     }
     setIsSubmitting(true);
     try {

@@ -33,7 +33,6 @@ export function useOrderForm() {
         sizes: MasterDataItem[];
     }>({ items: [], colors: [], sizes: [] });
 
-    const [debugInfo, setDebugInfo] = useState<{ version?: string; count?: number }>({});
     const [order, setOrder] = useState<OrderState>({
         selectedId: "",
         plan: null,
@@ -48,11 +47,10 @@ export function useOrderForm() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await fetch(`${GAS_URL}${GAS_URL.includes("?") ? "&" : "?"}_=${Date.now()}`);
+                const res = await fetch(GAS_URL);
                 const data = await res.json();
                 setFiles(data.latestFiles);
                 setMasterData(data.masterData);
-                setDebugInfo({ version: data.version_tag, count: data.files_count });
             } catch (err) {
                 console.error("Failed to fetch master data", err);
             } finally {
@@ -88,7 +86,6 @@ export function useOrderForm() {
         files,
         masterData,
         order,
-        debugInfo,
         updateOrder,
         nextStep,
         prevStep
