@@ -50,21 +50,6 @@ function OrderPageInner() {
   }, [step]);
 
   const handleSubmit = async () => {
-    // ULTIMATE DEBUG ALERT (BUILD: 2026-03-19 09:15)
-    if (typeof window !== "undefined") {
-      const debugInfo = {
-        activeGASUrl: ACTIVE_GAS_URL,
-        firstFileFromGAS: files[0] || "No files loaded",
-        orderStateBeforeSend: order,
-        submissionData: {
-          ...order,
-          thread1: order.threads[0] || "",
-          thread2: order.threads[1] || "",
-          thread3: order.threads[2] || "",
-        }
-      };
-      window.alert("【ULTIMATE DEBUG】\n" + JSON.stringify(debugInfo, null, 2));
-    }
     setIsSubmitting(true);
     try {
       // Map threads array to thread1, 2, 3 for GAS backend compatibility
@@ -112,29 +97,44 @@ function OrderPageInner() {
 
   if (isSuccess) {
     return (
-      <div className="container animate-fade-in flex flex-col items-center justify-center text-center min-h-[80vh]">
-        <div className="w-24 h-24 bg-white border border-border text-accent-blue rounded-full flex items-center justify-center mb-8 text-4xl shadow-sm">
-          ✓
+      <div className="success-screen">
+        <div className="success-card">
+          <div className="success-icon-container shadow-inner">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          
+          <h1 className="text-3xl font-black tracking-[0.2em] mb-4 text-text-main">THANK YOU</h1>
+          
+          <div className="w-12 h-0.5 bg-accent-gold/30 mx-auto mb-6"></div>
+          
+          <p className="text-sub mb-10 leading-relaxed font-medium">
+            ご注文を承りました。<br />
+            仕上がりまで、どうぞ楽しみにお待ちください。
+          </p>
+
+          <div className="space-y-4">
+            <button
+              className="finalize-btn w-full"
+              style={{ backgroundColor: "#c06c84", boxShadow: '0 10px 20px rgba(192, 108, 132, 0.2)' }}
+              onClick={() => window.location.href = "https://sts-process-visualization.jogimagi.com/"}
+            >
+              音の刺繍について
+            </button>
+            
+            <button
+              className="btn-home"
+              onClick={() => window.location.reload()}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              HOME
+            </button>
+          </div>
         </div>
-        <h1 className="text-3xl mb-4">THANK YOU</h1>
-        <p className="text-sub mb-10 leading-relaxed">
-          ご注文を承りました。<br />
-          あなたの音が形になるまで、もう少々お待ちください。<br />
-          制作過程は以下のボタンよりご確認いただけます。
-        </p>
-        <button
-          className="submit-btn mb-6"
-          style={{ backgroundColor: "#c06c84" }}
-          onClick={() => window.location.href = "https://sts-process-visualization.jogimagi.com/"}
-        >
-          音の刺繍について
-        </button>
-        <button
-          className="text-sub underline text-xs tracking-widest opacity-60 hover:opacity-100 transition-opacity"
-          onClick={() => window.location.reload()}
-        >
-          HOME
-        </button>
       </div>
     );
   }
