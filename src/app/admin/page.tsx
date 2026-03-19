@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { THREAD_COLORS } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
+import { formatDisplayId } from "@/utils/id";
 
 interface Submission {
     timestamp: string;
@@ -103,7 +104,7 @@ export default function AdminDashboard() {
                         <div className="flex justify-between items-start mb-8">
                             <div className="flex-1">
                                 <span className="admin-badge mb-3">{isCompleted ? 'COMPLETED' : 'NEW ORDER'}</span>
-                                <h1 className="text-5xl font-black tracking-tighter text-slate-900 leading-none">{current.selectedId}</h1>
+                                <h1 className="text-5xl font-black tracking-tighter text-slate-900 leading-none">{formatDisplayId(current.selectedId)}</h1>
                             </div>
                             <div className="text-right flex flex-col items-end gap-3">
                                 <div>
@@ -193,7 +194,7 @@ export default function AdminDashboard() {
                                                 {idx + 1}
                                             </div>
                                             <div>
-                                                <p className="font-black text-sm text-slate-900">{sub.selectedId}</p>
+                                                <p className="font-black text-sm text-slate-900">{formatDisplayId(sub.selectedId)}</p>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">
                                                     {new Date(sub.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>

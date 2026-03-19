@@ -1,14 +1,5 @@
-"use client";
 import { useState } from "react";
-
-/** Strip date prefix for display: "20260305_171923_name" → "171923_name" */
-function formatDisplayId(id: string): string {
-    const parts = id.split("_");
-    if (parts.length >= 3 && /^\d{8}$/.test(parts[0])) {
-        return parts.slice(1).join("_");
-    }
-    return id;
-}
+import { formatDisplayId } from "@/utils/id";
 
 export default function Step1_IDSelection({
     files,
