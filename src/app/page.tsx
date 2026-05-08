@@ -209,12 +209,15 @@ function OrderPageInner() {
                 className="btn-nav btn-continue"
                 disabled={isSubmitting}
                 onClick={() => {
-                  setShowStaffConfirmation(true);
-                  setIsStaffConfirmed(false);
+                  if (isStaffConfirmed) {
+                    handleSubmit();
+                  } else {
+                    setShowStaffConfirmation(true);
+                  }
                 }}
                 style={{ backgroundColor: '#c06c84', minWidth: '160px' }}
               >
-                決定 →
+                {isSubmitting ? "送信中..." : isStaffConfirmed ? "送信 →" : "決定 →"}
               </button>
             )}
           </div>
@@ -240,24 +243,15 @@ function OrderPageInner() {
             </div>
             
             <div className="modal-actions">
-              {!isStaffConfirmed ? (
-                <button 
-                  className="btn-modal btn-modal-primary"
-                  onClick={() => setIsStaffConfirmed(true)}
-                >
-                  確認
-                </button>
-              ) : (
-                <button 
-                  className="btn-modal btn-modal-primary"
-                  onClick={() => {
-                    handleSubmit();
-                  }}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "送信中..." : "決定"}
-                </button>
-              )}
+              <button 
+                className="btn-modal btn-modal-primary"
+                onClick={() => {
+                  setIsStaffConfirmed(true);
+                  setShowStaffConfirmation(false);
+                }}
+              >
+                確認
+              </button>
               
               <button 
                 className="btn-modal btn-modal-secondary"
