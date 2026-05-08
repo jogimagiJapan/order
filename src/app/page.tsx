@@ -223,34 +223,33 @@ function OrderPageInner() {
 
       {/* Staff Confirmation Modal */}
       {showStaffConfirmation && !isSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl border border-border">
-            <div className="text-center mb-6">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold mx-auto mb-4">
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-icon-container">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-              <h3 className="text-lg font-black tracking-wider text-text-main mb-2">スタッフ確認</h3>
-              <p className="text-sm text-sub font-medium leading-relaxed">
-                この画面をスタッフに提示してください。<br/>
-                （ここからはスタッフが操作します）
-              </p>
             </div>
             
-            <div className="flex flex-col gap-3">
+            <h3 className="modal-title">スタッフ確認</h3>
+            <div className="modal-text">
+              この画面をスタッフに提示してください。<br/>
+              （ここからはスタッフが操作します）
+            </div>
+            
+            <div className="modal-actions">
               {!isStaffConfirmed ? (
                 <button 
-                  className="w-full py-3.5 rounded-full font-bold text-white transition-all transform active:scale-95"
-                  style={{ backgroundColor: '#c06c84', boxShadow: '0 4px 10px rgba(192, 108, 132, 0.3)' }}
+                  className="btn-modal btn-modal-primary"
                   onClick={() => setIsStaffConfirmed(true)}
                 >
                   確認
                 </button>
               ) : (
                 <button 
-                  className="w-full py-3.5 rounded-full font-bold text-white transition-all transform active:scale-95"
-                  style={{ backgroundColor: '#c06c84', boxShadow: '0 4px 10px rgba(192, 108, 132, 0.3)' }}
+                  className="btn-modal btn-modal-primary"
                   onClick={() => {
                     handleSubmit();
                   }}
@@ -261,14 +260,14 @@ function OrderPageInner() {
               )}
               
               <button 
-                className="w-full py-3.5 rounded-full font-bold text-sub bg-gray-50 hover:bg-gray-100 border border-border transition-all transform active:scale-95"
+                className="btn-modal btn-modal-secondary"
                 onClick={() => {
                   setShowStaffConfirmation(false);
                   setIsStaffConfirmed(false);
                 }}
                 disabled={isSubmitting}
               >
-                戻る
+                もどる
               </button>
             </div>
           </div>
