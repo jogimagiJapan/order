@@ -638,6 +638,14 @@ textarea:focus {
 }
 
 /* Admin Specific Styles */
+.admin-dashboard-title {
+  font-size: 1em; /* half of browser default h1 (2em) */
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
 .admin-card-header {
   display: flex;
   flex-direction: column;
