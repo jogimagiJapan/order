@@ -18,12 +18,7 @@ export default function Step3_Preview({
     );
 
     return (
-        <div className="animate-fade-in pb-10">
-            <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-1 mt-6">03. Review</h2>
-                <p className="text-sub">ご注文内容の最終確認</p>
-            </header>
-
+        <div className="animate-fade-in pb-10 pt-4">
             <div className="grid gap-8 preview-grid-pc">
                 {/* Order Details List */}
                 <div className="thread-card shadow-sm review-left">
@@ -31,12 +26,12 @@ export default function Step3_Preview({
                         Order Details
                     </h3>
                     <div className="summary-list">
-                        <SummaryRow label="order id" value={order.selectedId} />
-                        <SummaryRow label="selected plan" value={order.plan || "-"} />
+                        <SummaryRow label="id" value={order.selectedId} />
+                        <SummaryRow label="plan" value={order.plan || "-"} />
                         <SummaryRow label="option" value={order.option || "-"} />
-                        <SummaryRow label="target item" value={order.item || "-"} />
-                        <SummaryRow label="item color" value={order.itemColor || "-"} />
-                        <SummaryRow label="item size" value={order.itemSize || "-"} />
+                        <SummaryRow label="item" value={order.item || "-"} />
+                        <SummaryRow label="color" value={order.itemColor || "-"} />
+                        <SummaryRow label="size" value={order.itemSize || "-"} />
                     </div>
                 </div>
 
@@ -74,9 +69,9 @@ export default function Step3_Preview({
                     )}
 
                     <div className="total-section">
-                        <div className="flex flex-col">
-                            <span className="total-label">Subtotal</span>
-                            <span className="text-[10px] text-accent-rose font-bold mt-0.5">Tax Included</span>
+                        <div className="total-label-block">
+                            <span className="total-label">Total</span>
+                            <span className="total-tax">税込</span>
                         </div>
                         <span className="total-amount">¥{order.totalPrice.toLocaleString()}</span>
                     </div>

@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     if (!current) {
         return (
             <div className="container py-20 text-center">
-                <h1 className="mb-4">DASHBOARD</h1>
+                <h1 className="text-sm font-black tracking-widest text-slate-800 mb-4">DASHBOARD</h1>
                 <p className="text-sub">No submissions found.</p>
             </div>
         );
@@ -83,20 +83,19 @@ export default function AdminDashboard() {
 
     const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
     const isCompleted = completedIds[current.selectedId] || false;
+    const formattedTimestamp = new Date(current.timestamp).toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32">
             <div className="container py-6">
-                <header className="mb-6 flex justify-between items-center px-2">
-                    <h1 className="text-xl font-black tracking-widest text-slate-800">DASHBOARD</h1>
-                    <div className="text-right">
-                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                            {new Date(current.timestamp).toLocaleDateString('ja-JP')}
-                        </div>
-                        <div className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">
-                            {new Date(current.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                    </div>
+                <header className="mb-2 px-2">
+                    <h1 className="text-sm font-black tracking-widest text-slate-800">DASHBOARD</h1>
                 </header>
 
                 <main>
@@ -108,6 +107,9 @@ export default function AdminDashboard() {
                                 <h1 className="text-5xl font-black tracking-tighter text-slate-900 leading-none">{formatDisplayId(current.selectedId)}</h1>
                             </div>
                             <div className="text-right flex flex-col items-end gap-3">
+                                <p className="text-[10px] font-bold text-slate-400 tracking-tight whitespace-nowrap">
+                                    {formattedTimestamp}
+                                </p>
                                 <div>
                                     <p className="text-4xl font-black text-slate-900 font-title leading-none">¥{current.totalPrice.toLocaleString()}</p>
                                 </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 
 export type Plan = "Lite" | "Limited" | "Std Wave" | "Std Circle";
-export type PlanOption = "緯度経度日時" | "なし";
+export type PlanOption = "GPS日時" | "なし";
 
 export const isStdPlan = (plan: Plan | null): boolean =>
     plan === "Std Wave" || plan === "Std Circle";

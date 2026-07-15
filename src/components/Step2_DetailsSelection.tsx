@@ -55,7 +55,7 @@ export default function Step2_DetailsSelection({
     ];
 
     const options: { id: PlanOption; label: string; price: string }[] = [
-        { id: "緯度経度日時", label: "緯度経度日時", price: "+¥0" },
+        { id: "GPS日時", label: "GPS日時", price: "+¥0" },
         { id: "なし", label: "なし", price: "+¥0" },
     ];
 
@@ -122,12 +122,7 @@ export default function Step2_DetailsSelection({
     else if (order.threads.some(t => !t)) activeSection = 6;
 
     return (
-        <div className="animate-fade-in pb-20 px-1">
-            <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-2 mt-6">02. Customize</h2>
-                <p className="text-sub">デザインと詳細を選択してください</p>
-            </header>
-
+        <div className="animate-fade-in pb-20 px-1 pt-4">
             <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? 'focused-section' : ''}`} ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-2">

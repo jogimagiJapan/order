@@ -504,12 +504,26 @@ textarea:focus {
   align-items: center;
 }
 
+.total-label-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .total-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-main);
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
+  line-height: 1.2;
+}
+
+.total-tax {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-rose);
+  letter-spacing: 0.1em;
 }
 
 .total-amount {
