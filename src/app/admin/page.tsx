@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     if (!current) {
         return (
             <div className="container py-20 text-center">
-                <h1 className="text-[10px] font-black tracking-[0.25em] text-slate-400 mb-4">DASHBOARD</h1>
+                <h1 className="text-[5px] font-black tracking-[0.25em] text-slate-400 mb-4">DASHBOARD</h1>
                 <p className="text-sub">No submissions found.</p>
             </div>
         );
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
         <div className="bg-slate-50 min-h-screen pb-32">
             <div className="container py-6">
                 <header className="mb-2 px-2">
-                    <h1 className="text-[10px] font-black tracking-[0.25em] text-slate-400">DASHBOARD</h1>
+                    <h1 className="text-[5px] font-black tracking-[0.25em] text-slate-400">DASHBOARD</h1>
                 </header>
 
                 <main>

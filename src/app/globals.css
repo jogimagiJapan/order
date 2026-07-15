@@ -706,7 +706,7 @@ textarea:focus {
 }
 
 .admin-price {
-  font-size: 1.875rem;
+  font-size: 0.9375rem;
   font-weight: 900;
   font-family: var(--font-title);
   color: #0f172a;
