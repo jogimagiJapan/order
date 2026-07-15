@@ -638,6 +638,23 @@ textarea:focus {
 }
 
 /* Admin Specific Styles */
+.admin-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-header-row-end {
+  align-items: center;
+}
+
 .admin-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -654,6 +671,15 @@ textarea:focus {
 .admin-badge.is-done {
   background-color: #e2e8f0;
   color: #64748b;
+}
+
+.admin-timestamp {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .admin-complete-btn {
@@ -679,25 +705,30 @@ textarea:focus {
   color: #64748b;
 }
 
+.admin-price {
+  font-size: 1.875rem;
+  font-weight: 900;
+  font-family: var(--font-title);
+  color: #0f172a;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .admin-display-id {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  line-height: 1.1;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.15;
 }
 
-.admin-display-id .id-time {
-  font-size: 2.75rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  color: #0f172a;
-}
-
+.admin-display-id .id-time,
 .admin-display-id .id-user {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 0.02em;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
 }
 
 .history-display-id {

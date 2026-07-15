@@ -102,29 +102,28 @@ export default function AdminDashboard() {
                 <main>
                     {/* Main Instruction Sheet */}
                     <section className={`instruction-sheet mb-8 animate-fade-in ${isCompleted ? 'is-completed' : ''}`}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className={`admin-badge ${isCompleted ? 'is-done' : ''}`}>
-                                {isCompleted ? 'COMPLETED' : 'NEW ORDER'}
-                            </span>
-                            <p className="text-[10px] font-bold text-slate-400 tracking-tight whitespace-nowrap">
-                                {formattedTimestamp}
-                            </p>
-                        </div>
+                        <div className="admin-card-header mb-8">
+                            <div className="admin-header-row">
+                                <span className={`admin-badge ${isCompleted ? 'is-done' : ''}`}>
+                                    {isCompleted ? 'COMPLETED' : 'NEW ORDER'}
+                                </span>
+                                <p className="admin-timestamp">{formattedTimestamp}</p>
+                            </div>
 
-                        <div className="flex justify-between items-end gap-4 mb-8">
                             <div className="admin-display-id">
                                 <span className="id-time">{displayId.time}</span>
                                 {displayId.username && <span className="id-user">{displayId.username}</span>}
                             </div>
-                            <div className="flex items-center gap-3 shrink-0">
+
+                            <div className="admin-header-row admin-header-row-end">
                                 <button
                                     type="button"
                                     className={`admin-complete-btn ${isCompleted ? 'is-done' : ''}`}
                                     onClick={() => toggleCompleted(current.selectedId)}
                                 >
-                                    {isCompleted ? '完了済み' : '作業完了'}
+                                    {isCompleted ? '作業完了' : '作業中'}
                                 </button>
-                                <p className="text-3xl font-black text-slate-900 font-title leading-none">
+                                <p className="admin-price">
                                     ¥{current.totalPrice.toLocaleString()}
                                 </p>
                             </div>
