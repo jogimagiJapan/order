@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { THREAD_COLORS } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
-import { formatDisplayId } from "@/utils/id";
+import { parseDisplayId } from "@/utils/id";
 
 interface Submission {
     timestamp: string;
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     if (!current) {
         return (
             <div className="container py-20 text-center">
-                <h1 className="text-sm font-black tracking-widest text-slate-800 mb-4">DASHBOARD</h1>
+                <h1 className="text-[10px] font-black tracking-[0.25em] text-slate-400 mb-4">DASHBOARD</h1>
                 <p className="text-sub">No submissions found.</p>
             </div>
         );
@@ -90,38 +90,43 @@ export default function AdminDashboard() {
         hour: '2-digit',
         minute: '2-digit',
     });
+    const displayId = parseDisplayId(current.selectedId);
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32">
             <div className="container py-6">
                 <header className="mb-2 px-2">
-                    <h1 className="text-sm font-black tracking-widest text-slate-800">DASHBOARD</h1>
+                    <h1 className="text-[10px] font-black tracking-[0.25em] text-slate-400">DASHBOARD</h1>
                 </header>
 
                 <main>
                     {/* Main Instruction Sheet */}
                     <section className={`instruction-sheet mb-8 animate-fade-in ${isCompleted ? 'is-completed' : ''}`}>
-                        <div className="flex justify-between items-start mb-8">
-                            <div className="flex-1">
-                                <span className="admin-badge mb-3">{isCompleted ? 'COMPLETED' : 'NEW ORDER'}</span>
-                                <h1 className="text-5xl font-black tracking-tighter text-slate-900 leading-none">{formatDisplayId(current.selectedId)}</h1>
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className={`admin-badge ${isCompleted ? 'is-done' : ''}`}>
+                                {isCompleted ? 'COMPLETED' : 'NEW ORDER'}
+                            </span>
+                            <p className="text-[10px] font-bold text-slate-400 tracking-tight whitespace-nowrap">
+                                {formattedTimestamp}
+                            </p>
+                        </div>
+
+                        <div className="flex justify-between items-end gap-4 mb-8">
+                            <div className="admin-display-id">
+                                <span className="id-time">{displayId.time}</span>
+                                {displayId.username && <span className="id-user">{displayId.username}</span>}
                             </div>
-                            <div className="text-right flex flex-col items-end gap-3">
-                                <p className="text-[10px] font-bold text-slate-400 tracking-tight whitespace-nowrap">
-                                    {formattedTimestamp}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <button
+                                    type="button"
+                                    className={`admin-complete-btn ${isCompleted ? 'is-done' : ''}`}
+                                    onClick={() => toggleCompleted(current.selectedId)}
+                                >
+                                    {isCompleted ? '完了済み' : '作業完了'}
+                                </button>
+                                <p className="text-3xl font-black text-slate-900 font-title leading-none">
+                                    ¥{current.totalPrice.toLocaleString()}
                                 </p>
-                                <div>
-                                    <p className="text-4xl font-black text-slate-900 font-title leading-none">¥{current.totalPrice.toLocaleString()}</p>
-                                </div>
-                                <label className="flex items-center gap-2 cursor-pointer bg-slate-100 px-4 py-2 rounded-full active:scale-95 transition-transform">
-                                    <input
-                                        type="checkbox"
-                                        checked={isCompleted}
-                                        onChange={() => toggleCompleted(current.selectedId)}
-                                        className="w-4 h-4 rounded"
-                                    />
-                                    <span className="text-[10px] font-black text-slate-600 tracking-widest">作業完了</span>
-                                </label>
                             </div>
                         </div>
 
@@ -192,6 +197,7 @@ export default function AdminDashboard() {
                         <div className="history-list space-y-2">
                             {submissions.map((sub, idx) => {
                                 const subCompleted = completedIds[sub.selectedId] || false;
+                                const subDisplayId = parseDisplayId(sub.selectedId);
                                 return (
                                     <div
                                         key={idx}
@@ -202,11 +208,11 @@ export default function AdminDashboard() {
                                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
                                                 {idx + 1}
                                             </div>
-                                            <div>
-                                                <p className="font-black text-sm text-slate-900">{formatDisplayId(sub.selectedId)}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">
-                                                    {new Date(sub.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
+                                            <div className="history-display-id">
+                                                <span className="id-time">{subDisplayId.time}</span>
+                                                {subDisplayId.username && (
+                                                    <span className="id-user">{subDisplayId.username}</span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="text-right">

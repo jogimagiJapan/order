@@ -651,6 +651,74 @@ textarea:focus {
   letter-spacing: 0.05em;
 }
 
+.admin-badge.is-done {
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+.admin-complete-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-complete-btn:active {
+  transform: scale(0.96);
+}
+
+.admin-complete-btn.is-done {
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+.admin-display-id {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.1;
+}
+
+.admin-display-id .id-time {
+  font-size: 2.75rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #0f172a;
+}
+
+.admin-display-id .id-user {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+.history-display-id {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.history-display-id .id-time {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.history-display-id .id-user {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
 .instruction-sheet {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;

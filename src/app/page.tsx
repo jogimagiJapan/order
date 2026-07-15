@@ -145,9 +145,11 @@ function OrderPageInner() {
   return (
     <div className="min-h-screen bg-base-bg">
       <div className={`container ${step === 3 ? "container-wide" : ""}`}>
-        <header className="mb-12 text-center pt-8">
-          <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
-          <div className="flex justify-center gap-3 mt-6">
+        <header className={`text-center pt-8 ${step === 1 ? "mb-12" : "mb-4"}`}>
+          {step === 1 && (
+            <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
+          )}
+          <div className={`flex justify-center gap-3 ${step === 1 ? "mt-6" : ""}`}>
             {[1, 2, 3].map((s) => (
               <div
                 key={s}

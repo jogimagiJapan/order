@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { formatDisplayId } from "@/utils/id";
+import { parseDisplayId } from "@/utils/id";
+
+function DisplayId({ id }: { id: string }) {
+    const { time, username } = parseDisplayId(id);
+    return (
+        <span className="inline-flex flex-col leading-tight text-center">
+            <span>{time}</span>
+            {username && <span className="text-sm opacity-70">{username}</span>}
+        </span>
+    );
+}
 
 export default function Step1_IDSelection({
     files,
@@ -42,7 +52,7 @@ export default function Step1_IDSelection({
                         </span>
                         <div className="tile active" style={{ cursor: "default" }}>
                             <span className="text-lg font-bold tracking-tight">
-                                {formatDisplayId(selectedId)}
+                                <DisplayId id={selectedId} />
                             </span>
                         </div>
                     </div>
@@ -64,7 +74,7 @@ export default function Step1_IDSelection({
                                 }}
                             >
                                 <span className="text-lg font-bold tracking-tight">
-                                    {formatDisplayId(file.friendlyId)}
+                                    <DisplayId id={file.friendlyId} />
                                 </span>
                             </div>
                         ))
