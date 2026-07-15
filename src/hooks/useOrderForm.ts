@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 
-export type Plan = "Lite" | "Standard" | "Limited";
+export type Plan = "Lite" | "Limited" | "Std Wave" | "Std Circle";
+export type PlanOption = "緯度経度日時" | "なし";
+
+export const isStdPlan = (plan: Plan | null): boolean =>
+    plan === "Std Wave" || plan === "Std Circle";
 
 export interface MasterDataItem {
     name: string;
@@ -15,6 +19,7 @@ export interface MasterDataItem {
 export interface OrderState {
     selectedId: string;
     plan: Plan | null;
+    option: PlanOption | "";
     item: string;
     itemColor: string;
     itemSize: string;
@@ -36,6 +41,7 @@ export function useOrderForm() {
     const [order, setOrder] = useState<OrderState>({
         selectedId: "",
         plan: null,
+        option: "",
         item: "",
         itemColor: "",
         itemSize: "",
@@ -65,9 +71,8 @@ export function useOrderForm() {
             const next = { ...prev, ...updates };
             // Calculation logic
             let total = 0;
-            if (next.plan === "Lite") total = 2000;
-            else if (next.plan === "Standard") total = 4000;
-            else if (next.plan === "Limited") total = 2000;
+            if (next.plan === "Lite" || next.plan === "Limited") total = 2000;
+            else if (isStdPlan(next.plan)) total = 4000;
 
             const itemPrice = masterData.items.find(i => i.name === next.item)?.price || 0;
             next.totalPrice = total + itemPrice;

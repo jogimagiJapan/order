@@ -1,6 +1,6 @@
 "use client";
 
-import { Plan, MasterDataItem, OrderState } from "@/hooks/useOrderForm";
+import { Plan, PlanOption, MasterDataItem, OrderState, isStdPlan } from "@/hooks/useOrderForm";
 import ThreadSelector from "./ThreadSelector";
 import { useEffect, useRef } from "react";
 
@@ -14,6 +14,7 @@ export default function Step2_DetailsSelection({
     onUpdate: (updates: Partial<OrderState>) => void;
 }) {
     const plansRef = useRef<HTMLElement>(null);
+    const optionRef = useRef<HTMLElement>(null);
     const itemsRef = useRef<HTMLElement>(null);
     const colorRef = useRef<HTMLElement>(null);
     const sizeRef = useRef<HTMLElement>(null);
@@ -28,8 +29,9 @@ export default function Step2_DetailsSelection({
 
     // Auto-scroll logic
     useEffect(() => {
-        if (order.plan && !order.item) scrollTo(itemsRef);
-    }, [order.plan, order.item]);
+        if (order.plan && isStdPlan(order.plan) && !order.option) scrollTo(optionRef);
+        else if (order.plan && order.option && !order.item) scrollTo(itemsRef);
+    }, [order.plan, order.option, order.item]);
 
     useEffect(() => {
         if (order.item && !order.itemColor) scrollTo(colorRef);
@@ -47,8 +49,14 @@ export default function Step2_DetailsSelection({
 
     const plans: { id: Plan; label: string; price: string }[] = [
         { id: "Lite", label: "Lite", price: "¥2,000" },
-        { id: "Standard", label: "Standard", price: "¥4,000" },
         { id: "Limited", label: "Limited", price: "¥2,000" },
+        { id: "Std Wave", label: "Std Wave", price: "¥4,000" },
+        { id: "Std Circle", label: "Std Circle", price: "¥4,000" },
+    ];
+
+    const options: { id: PlanOption; label: string; price: string }[] = [
+        { id: "緯度経度日時", label: "緯度経度日時", price: "+¥0" },
+        { id: "なし", label: "なし", price: "+¥0" },
     ];
 
     // Filter logic
@@ -102,14 +110,16 @@ export default function Step2_DetailsSelection({
     };
 
     const threadCount = order.plan === "Lite" ? 1 : 3;
+    const stdSelected = isStdPlan(order.plan);
 
     // Determine which section should be highlighted to guide the user
     let activeSection = 0;
     if (!order.plan) activeSection = 1;
-    else if (!order.item) activeSection = 2;
-    else if (!order.itemColor) activeSection = 3;
-    else if (!order.itemSize) activeSection = 4;
-    else if (order.threads.some(t => !t)) activeSection = 5;
+    else if (!order.option) activeSection = 2;
+    else if (!order.item) activeSection = 3;
+    else if (!order.itemColor) activeSection = 4;
+    else if (!order.itemSize) activeSection = 5;
+    else if (order.threads.some(t => !t)) activeSection = 6;
 
     return (
         <div className="animate-fade-in pb-20 px-1">
@@ -120,7 +130,7 @@ export default function Step2_DetailsSelection({
 
             <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? 'focused-section' : ''}`} ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
-                <div className="grid grid-3">
+                <div className="grid grid-2">
                     {plans.map((p) => (
                         <div
                             key={p.id}
@@ -130,7 +140,13 @@ export default function Step2_DetailsSelection({
                                 const limit = p.id === "Lite" ? 1 : 3;
                                 let newThreads = order.threads.slice(0, limit);
                                 while (newThreads.length < limit) newThreads.push("");
-                                onUpdate({ plan: p.id, threads: newThreads });
+                                const nextIsStd = p.id === "Std Wave" || p.id === "Std Circle";
+                                onUpdate({
+                                    plan: p.id,
+                                    threads: newThreads,
+                                    // Std以外は「なし」を自動選択。Stdはユーザー選択を待つ
+                                    option: nextIsStd ? "" : "なし",
+                                });
                             }}
                         >
                             <span className="text-xs font-bold tracking-widest">{p.label}</span>
@@ -140,8 +156,35 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? 'focused-section' : ''}`} ref={itemsRef}>
-                <h3 className="section-title">02-2. SELECT ITEM</h3>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? 'focused-section' : ''}`} ref={optionRef}>
+                <h3 className="section-title">02-2. OPTION</h3>
+                <div className="grid grid-2">
+                    {!order.plan ? (
+                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                            <span className="text-[10px] italic">Select plan first</span>
+                        </div>
+                    ) : options.map((o) => {
+                        const locked = !stdSelected;
+                        return (
+                            <div
+                                key={o.id}
+                                className={`tile ${order.option === o.id ? "active" : ""} ${locked ? "opacity-50 cursor-not-allowed" : ""}`}
+                                onClick={() => {
+                                    if (locked) return;
+                                    onUpdate({ option: o.id });
+                                }}
+                            >
+                                <span className="text-sm font-bold">{o.label}</span>
+                                <span className="text-[10px] mt-1 opacity-60">{o.price}</span>
+                                {locked && o.id === "なし" && <span className="badge">Auto-Selected</span>}
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
+
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={itemsRef}>
+                <h3 className="section-title">02-3. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
                         <div
@@ -163,8 +206,8 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={colorRef}>
-                <h3 className="section-title">02-3. COLOR</h3>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={colorRef}>
+                <h3 className="section-title">02-4. COLOR</h3>
                 <div className="grid grid-2">
                     {!order.item ? (
                         <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
@@ -189,8 +232,8 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={sizeRef}>
-                <h3 className="section-title">02-4. SIZE</h3>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={sizeRef}>
+                <h3 className="section-title">02-5. SIZE</h3>
                 <div className="grid grid-2">
                     {!order.item ? (
                         <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
@@ -215,8 +258,8 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={threadsRef}>
-                <h3 className="section-title">02-5. THREAD COLORS</h3>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 6 ? 'focused-section' : ''}`} ref={threadsRef}>
+                <h3 className="section-title">02-6. THREAD COLORS</h3>
                 {order.plan ? (
                     <ThreadSelector
                         limit={threadCount}
@@ -231,7 +274,7 @@ export default function Step2_DetailsSelection({
             </section>
 
             <section ref={remarksRef}>
-                <h3 className="section-title">02-6. REMARKS (OPTIONAL)</h3>
+                <h3 className="section-title">02-7. REMARKS (OPTIONAL)</h3>
                 <textarea
                     className="w-full min-h-[120px] resize-none text-sm"
                     placeholder="ご要望や特記事項があればご記入ください"

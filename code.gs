@@ -31,7 +31,7 @@ function setupSpreadsheet() {
   if (!submissionSheet) {
     submissionSheet = ss.insertSheet(SUBMISSION_SHEET_NAME);
     submissionSheet.appendRow([
-      "タイムスタンプ", "選択ID", "プラン", "アイテム", "アイテムカラー", 
+      "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー", 
       "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス"
     ]);
   }
@@ -200,15 +200,16 @@ function doGet(e) {
       timestamp: row[0],
       selectedId: row[1],
       plan: row[2],
-      item: row[3],
-      itemColor: row[4],
-      itemSize: row[5],
-      thread1: row[6],
-      thread2: row[7],
-      thread3: row[8],
-      notes: row[9],
-      totalPrice: row[10],
-      status: row[11]
+      option: row[3],
+      item: row[4],
+      itemColor: row[5],
+      itemSize: row[6],
+      thread1: row[7],
+      thread2: row[8],
+      thread3: row[9],
+      notes: row[10],
+      totalPrice: row[11],
+      status: row[12]
     };
   });
   
@@ -240,6 +241,7 @@ function doPost(e) {
       timestamp,
       data.selectedId,
       data.plan,
+      data.option || "なし",
       data.item,
       data.itemColor,
       data.itemSize,

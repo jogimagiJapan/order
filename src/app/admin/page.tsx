@@ -9,6 +9,7 @@ interface Submission {
     timestamp: string;
     selectedId: string;
     plan: string;
+    option: string;
     item: string;
     itemColor: string;
     itemSize: string;
@@ -130,15 +131,21 @@ export default function AdminDashboard() {
                                     <p className="label-small">Plan</p>
                                 </div>
                                 <div className="admin-grid-val">
-                                    <p className="value">{current.item}</p>
-                                    <p className="label-small">Item</p>
+                                    <p className="value">{current.option || "なし"}</p>
+                                    <p className="label-small">Option</p>
                                 </div>
                             </div>
                             <div className="admin-grid-2">
                                 <div className="admin-grid-val">
+                                    <p className="value">{current.item}</p>
+                                    <p className="label-small">Item</p>
+                                </div>
+                                <div className="admin-grid-val">
                                     <p className="value">{current.itemColor}</p>
                                     <p className="label-small">Color</p>
                                 </div>
+                            </div>
+                            <div className="admin-grid-2">
                                 <div className="admin-grid-val">
                                     <p className="value">{current.itemSize}</p>
                                     <p className="label-small">Size</p>

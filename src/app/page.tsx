@@ -83,6 +83,7 @@ function OrderPageInner() {
   const threadLimit = order.plan === "Lite" ? 1 : 3;
   const isStep2Valid =
     order.plan &&
+    order.option &&
     order.item &&
     order.itemColor &&
     order.itemSize &&

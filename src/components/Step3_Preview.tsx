@@ -33,6 +33,7 @@ export default function Step3_Preview({
                     <div className="summary-list">
                         <SummaryRow label="order id" value={order.selectedId} />
                         <SummaryRow label="selected plan" value={order.plan || "-"} />
+                        <SummaryRow label="option" value={order.option || "-"} />
                         <SummaryRow label="target item" value={order.item || "-"} />
                         <SummaryRow label="item color" value={order.itemColor || "-"} />
                         <SummaryRow label="item size" value={order.itemSize || "-"} />
