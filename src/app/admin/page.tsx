@@ -5,6 +5,18 @@ import { THREAD_COLORS } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { parseDisplayId } from "@/utils/id";
 
+interface DeliveryInfo {
+    zip: string;
+    address: string;
+    building: string;
+    name: string;
+    phone: string;
+    email: string;
+    shippingFee: number;
+    progress: string;
+    trackingNumber: string;
+}
+
 interface Submission {
     timestamp: string;
     selectedId: string;
@@ -19,6 +31,9 @@ interface Submission {
     notes: string;
     totalPrice: number;
     status: string;
+    deliveryMethod: string;
+    shippingFee: number;
+    delivery?: DeliveryInfo | null;
 }
 
 export default function AdminDashboard() {
@@ -91,6 +106,8 @@ export default function AdminDashboard() {
         minute: '2-digit',
     });
     const displayId = parseDisplayId(current.selectedId);
+    const isShippingOrder = current.deliveryMethod === "配送";
+    const delivery = current.delivery;
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32">
@@ -104,9 +121,12 @@ export default function AdminDashboard() {
                     <section className={`instruction-sheet mb-8 animate-fade-in ${isCompleted ? 'is-completed' : ''}`}>
                         <div className="admin-card-header mb-8">
                             <div className="admin-header-row">
-                                <span className={`admin-badge ${isCompleted ? 'is-done' : ''}`}>
-                                    {isCompleted ? 'COMPLETED' : 'NEW ORDER'}
-                                </span>
+                                <div className="admin-badge-group">
+                                    <span className={`admin-badge ${isCompleted ? 'is-done' : ''}`}>
+                                        {isCompleted ? 'COMPLETED' : 'NEW ORDER'}
+                                    </span>
+                                    {isShippingOrder && <span className="admin-badge is-shipping">配送</span>}
+                                </div>
                                 <p className="admin-timestamp">{formattedTimestamp}</p>
                             </div>
 
@@ -178,6 +198,35 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
+                        {isShippingOrder && (
+                            <div className="admin-delivery mb-8">
+                                <div className="admin-delivery-head">
+                                    <h3 className="admin-label">Shipping To</h3>
+                                    {delivery?.progress && (
+                                        <span className="admin-delivery-progress">{delivery.progress}</span>
+                                    )}
+                                </div>
+                                {delivery ? (
+                                    <div className="admin-delivery-body">
+                                        <p className="admin-delivery-name">{delivery.name} 様</p>
+                                        <p>〒{delivery.zip}</p>
+                                        <p>{delivery.address}</p>
+                                        {delivery.building && <p>{delivery.building}</p>}
+                                        <p>{delivery.phone}</p>
+                                        <p>{delivery.email}</p>
+                                        <div className="admin-delivery-meta">
+                                            <span>送料 ¥{(delivery.shippingFee || 0).toLocaleString()}</span>
+                                            <span>送り状 {delivery.trackingNumber || "未発行"}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="admin-delivery-empty">
+                                        配送先データが見つかりません（配送情報シートをご確認ください）
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
                         {current.notes && (
                             <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl">
                                 <h3 className="admin-label mb-2">Remarks</h3>
@@ -206,7 +255,12 @@ export default function AdminDashboard() {
                                                 {idx + 1}
                                             </div>
                                             <div className="history-display-id">
-                                                <span className="id-time">{subDisplayId.time}</span>
+                                                <span className="id-time">
+                                                    {subDisplayId.time}
+                                                    {sub.deliveryMethod === "配送" && (
+                                                        <span className="history-ship-mark">配送</span>
+                                                    )}
+                                                </span>
                                                 {subDisplayId.username && (
                                                     <span className="id-user">{subDisplayId.username}</span>
                                                 )}

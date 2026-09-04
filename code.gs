@@ -8,6 +8,22 @@ const FOLDER_ID = "1NFTXy-gqHPxHIPvDl01yVBl_XQx2qLmW";
 const EXTRACTION_SHEET_NAME = "ファイル名抽出シート";
 const SUBMISSION_SHEET_NAME = "送信情報収集シート";
 const MASTER_DATA_SHEET_NAME = "マスタデータ";
+const DELIVERY_SHEET_NAME = "配送情報シート";
+
+const SUBMISSION_HEADERS = [
+  "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー",
+  "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス",
+  "受取方法", "送料"
+];
+
+const DELIVERY_HEADERS = [
+  "タイムスタンプ", "選択ID", "郵便番号", "住所", "建物名・部屋番号", "名前",
+  "電話番号", "メールアドレス", "送料", "合計金額", "進捗", "送り状番号", "発送日", "備考"
+];
+
+// 送料マスタ初期値: 北海道(00x, 04x-09x) / 沖縄(90x) と主な離島の郵便番号プレフィックス
+const DEFAULT_REMOTE_PREFIXES =
+  "00,04,05,06,07,08,09,90,685,817,853,894,8913,8914,952,10021";
 
 function onOpen() {
   setupSpreadsheet();
@@ -30,10 +46,16 @@ function setupSpreadsheet() {
   let submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
   if (!submissionSheet) {
     submissionSheet = ss.insertSheet(SUBMISSION_SHEET_NAME);
-    submissionSheet.appendRow([
-      "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー", 
-      "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス"
-    ]);
+    submissionSheet.appendRow(SUBMISSION_HEADERS);
+  } else {
+    // 既存シートに不足している列（受取方法・送料）を末尾へ追加
+    const lastCol = submissionSheet.getLastColumn();
+    const header = submissionSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    SUBMISSION_HEADERS.forEach(function (name) {
+      if (header.indexOf(name) === -1) {
+        submissionSheet.getRange(1, submissionSheet.getLastColumn() + 1).setValue(name);
+      }
+    });
   }
   
   // 3. Master Data Sheet
@@ -66,6 +88,25 @@ function setupSpreadsheet() {
     ];
     
     initialData.forEach(row => masterSheet.appendRow(row));
+  }
+
+  // 送料マスタ（未登録なら追加）
+  const masterValues = masterSheet.getDataRange().getValues();
+  const hasShipping = masterValues.some(row => row[0] === "Shipping");
+  if (!hasShipping) {
+    masterSheet.appendRow(["Shipping", "通常送料", 0, "北海道・沖縄・離島以外", ""]);
+    masterSheet.appendRow([
+      "Shipping", "遠方送料", 1000,
+      "北海道・沖縄・離島（対象アイテム列に郵便番号の先頭数字をカンマ区切りで記載）",
+      DEFAULT_REMOTE_PREFIXES
+    ]);
+  }
+
+  // 4. Delivery Sheet
+  let deliverySheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
+  if (!deliverySheet) {
+    deliverySheet = ss.insertSheet(DELIVERY_SHEET_NAME);
+    deliverySheet.appendRow(DELIVERY_HEADERS);
   }
 }
 
@@ -176,7 +217,8 @@ function doGet(e) {
   const master = {
     items: [],
     colors: [],
-    sizes: []
+    sizes: [],
+    shipping: []
   };
   
   masterData.slice(1).forEach(row => {
@@ -185,12 +227,33 @@ function doGet(e) {
       name: row[1], 
       price: row[2], 
       note: row[3],
-      associatedItems: row[4] ? row[4].split(",").map(i => i.trim()) : []
+      associatedItems: row[4] ? String(row[4]).split(",").map(i => i.trim()) : []
     };
     if (category === "Item") master.items.push(item);
     if (category === "ItemColor") master.colors.push(item);
     if (category === "ItemSize") master.sizes.push(item);
+    if (category === "Shipping") master.shipping.push(item);
   });
+  
+  // Delivery records keyed by order ID (latest wins)
+  const deliveryMap = {};
+  const deliverySheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
+  if (deliverySheet) {
+    deliverySheet.getDataRange().getValues().slice(1).forEach(row => {
+      if (!row[1]) return;
+      deliveryMap[row[1]] = {
+        zip: row[2],
+        address: row[3],
+        building: row[4],
+        name: row[5],
+        phone: row[6],
+        email: row[7],
+        shippingFee: row[8],
+        progress: row[10],
+        trackingNumber: row[11]
+      };
+    });
+  }
   
   // Get latest 6 submissions for admin dashboard
   const submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
@@ -209,7 +272,10 @@ function doGet(e) {
       thread3: row[9],
       notes: row[10],
       totalPrice: row[11],
-      status: row[12]
+      status: row[12],
+      deliveryMethod: row[13] || "当日渡し",
+      shippingFee: row[14] || 0,
+      delivery: deliveryMap[row[1]] || null
     };
   });
   
@@ -237,6 +303,9 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const timestamp = new Date();
     
+    const deliveryMethod = data.deliveryMethod === "配送" ? "配送" : "当日渡し";
+    const shippingFee = data.shippingFee || 0;
+    
     const row = [
       timestamp,
       data.selectedId,
@@ -250,10 +319,17 @@ function doPost(e) {
       data.thread3,
       data.notes,
       data.totalPrice,
-      "新規"
+      "新規",
+      deliveryMethod,
+      shippingFee
     ];
     
     sheet.appendRow(row);
+    
+    if (deliveryMethod === "配送") {
+      appendDeliveryRow(ss, timestamp, data, shippingFee);
+      sendDeliveryConfirmationMail(data, shippingFee);
+    }
     
     return ContentService.createTextOutput(JSON.stringify({ result: 'success' }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -263,5 +339,80 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
+  }
+}
+
+/**
+ * Appends a row to the delivery sheet. Tracking number / shipping date are
+ * left blank for staff to fill in manually.
+ */
+function appendDeliveryRow(ss, timestamp, data, shippingFee) {
+  let deliverySheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
+  if (!deliverySheet) {
+    deliverySheet = ss.insertSheet(DELIVERY_SHEET_NAME);
+    deliverySheet.appendRow(DELIVERY_HEADERS);
+  }
+  
+  deliverySheet.appendRow([
+    timestamp,
+    data.selectedId,
+    data.shipZip || "",
+    data.shipAddress || "",
+    data.shipBuilding || "",
+    data.shipName || "",
+    data.shipPhone || "",
+    data.shipEmail || "",
+    shippingFee,
+    data.totalPrice,
+    "未発送",
+    "",
+    "",
+    ""
+  ]);
+}
+
+/**
+ * Sends an order confirmation mail to the customer.
+ * Failures are logged only, so that a mail error never rejects the order.
+ */
+function sendDeliveryConfirmationMail(data, shippingFee) {
+  try {
+    const to = data.shipEmail;
+    if (!to) return;
+    
+    const address = [data.shipAddress, data.shipBuilding].filter(Boolean).join(" ");
+    const body = [
+      data.shipName + " 様",
+      "",
+      "SEW THE SOUND です。この度はご注文いただきありがとうございます。",
+      "以下の内容で承りました。商品の発送準備が整い次第、改めてご連絡いたします。",
+      "",
+      "──────────────",
+      "ご注文ID: " + data.selectedId,
+      "プラン: " + data.plan,
+      "オプション: " + (data.option || "なし"),
+      "アイテム: " + data.item + " / " + data.itemColor + " / " + data.itemSize,
+      "糸: " + [data.thread1, data.thread2, data.thread3].filter(Boolean).join(", "),
+      "",
+      "お届け先:",
+      "〒" + (data.shipZip || ""),
+      address,
+      "TEL " + (data.shipPhone || ""),
+      "",
+      "送料: ¥" + Number(shippingFee).toLocaleString(),
+      "合計金額（税込）: ¥" + Number(data.totalPrice).toLocaleString(),
+      "──────────────",
+      "",
+      "※このメールは送信専用です。",
+      "SEW THE SOUND"
+    ].join("\n");
+    
+    MailApp.sendEmail({
+      to: to,
+      subject: "【SEW THE SOUND】ご注文ありがとうございます",
+      body: body
+    });
+  } catch (mailError) {
+    console.error("Failed to send confirmation mail: " + mailError);
   }
 }

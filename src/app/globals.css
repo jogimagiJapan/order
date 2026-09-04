@@ -494,6 +494,182 @@ textarea:focus {
   color: var(--text-main);
 }
 
+/* Delivery Step */
+.tile-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.tile-note {
+  font-size: 0.65rem;
+  margin-top: 6px;
+  opacity: 0.6;
+}
+
+.ship-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ship-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ship-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.ship-hint {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  letter-spacing: 0;
+}
+
+.ship-input {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: border-color 0.3s ease;
+}
+
+.ship-input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.ship-input.is-done {
+  border-color: #4f7ef8;
+}
+
+.ship-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+
+.ship-check input {
+  width: 16px;
+  height: 16px;
+}
+
+.ship-skip {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--card-bg);
+  color: var(--text-sub);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.ship-skip:active {
+  transform: scale(0.96);
+}
+
+.ship-fee {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ship-fee-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ship-fee-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--text-main);
+}
+
+.ship-fee-note {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.ship-fee-amount {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-rose);
+}
+
+/* Review: shipping destination block */
+.review-shipping {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.review-shipping-title {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+}
+
+.review-shipping-line {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.7;
+  word-break: break-all;
+}
+
+.review-shipping-line.is-name {
+  font-weight: 800;
+}
+
+.total-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 12px 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
 .total-section {
   margin-top: 12px;
   padding: 24px 8px;
@@ -679,6 +855,81 @@ textarea:focus {
 .admin-badge.is-done {
   background-color: #e2e8f0;
   color: #64748b;
+}
+
+.admin-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-badge.is-shipping {
+  background-color: #fce7f0;
+  color: #c06c84;
+}
+
+.admin-delivery {
+  padding: 20px;
+  border: 1px solid #fbcfe1;
+  border-radius: 16px;
+  background-color: #fff7fa;
+}
+
+.admin-delivery-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.admin-delivery-progress {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #c06c84;
+}
+
+.admin-delivery-body {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+.admin-delivery-name {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.admin-delivery-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #fbcfe1;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.admin-delivery-empty {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.history-ship-mark {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: #fce7f0;
+  color: #c06c84;
+  font-size: 0.55rem;
+  font-weight: 800;
+  vertical-align: middle;
 }
 
 .admin-timestamp {

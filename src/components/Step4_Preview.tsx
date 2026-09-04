@@ -2,13 +2,21 @@
 
 import { OrderState } from "@/hooks/useOrderForm";
 import { THREAD_COLORS } from "@/constants/colors";
+import { normalizeZip } from "@/utils/shipping";
 
-export default function Step3_Preview({
+export default function Step4_Preview({
     order
 }: {
     order: OrderState;
 }) {
     const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
+    const isShipping = order.deliveryMethod === "shipping";
+    const itemsSubtotal = order.totalPrice - order.shippingFee;
+
+    const formatZip = (zip: string) => {
+        const digits = normalizeZip(zip);
+        return digits.length === 7 ? `〒${digits.slice(0, 3)}-${digits.slice(3)}` : zip;
+    };
 
     const SummaryRow = ({ label, value }: { label: string; value: string }) => (
         <div className="summary-row">
@@ -20,7 +28,7 @@ export default function Step3_Preview({
     return (
         <div className="animate-fade-in pb-10">
             <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-1 mt-6">03. Review</h2>
+                <h2 className="mb-1">04. Review</h2>
                 <p className="text-sub">ご注文内容の最終確認</p>
             </header>
 
@@ -37,7 +45,22 @@ export default function Step3_Preview({
                         <SummaryRow label="ITEM" value={order.item || "-"} />
                         <SummaryRow label="COLOR" value={order.itemColor || "-"} />
                         <SummaryRow label="SIZE" value={order.itemSize || "-"} />
+                        <SummaryRow label="RECEIVE" value={isShipping ? "後日配送" : "本日お渡し"} />
                     </div>
+
+                    {isShipping && (
+                        <div className="review-shipping">
+                            <h4 className="review-shipping-title">Shipping To</h4>
+                            <p className="review-shipping-line">{formatZip(order.shipping.zip)}</p>
+                            <p className="review-shipping-line">{order.shipping.address}</p>
+                            {order.shipping.building && (
+                                <p className="review-shipping-line">{order.shipping.building}</p>
+                            )}
+                            <p className="review-shipping-line is-name">{order.shipping.name} 様</p>
+                            <p className="review-shipping-line">{order.shipping.phone}</p>
+                            <p className="review-shipping-line">{order.shipping.email}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Thread Selection with Chips */}
@@ -70,6 +93,19 @@ export default function Step3_Preview({
                             <p className="text-xs text-text-main/80 italic leading-relaxed border-l-2 border-border pl-3">
                                 {order.notes}
                             </p>
+                        </div>
+                    )}
+
+                    {isShipping && (
+                        <div className="total-breakdown">
+                            <div className="breakdown-row">
+                                <span>商品小計</span>
+                                <span>¥{itemsSubtotal.toLocaleString()}</span>
+                            </div>
+                            <div className="breakdown-row">
+                                <span>送料</span>
+                                <span>¥{order.shippingFee.toLocaleString()}</span>
+                            </div>
                         </div>
                     )}
 

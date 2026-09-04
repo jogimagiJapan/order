@@ -5,8 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { useOrderForm } from "@/hooks/useOrderForm";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
-import Step3_Preview from "@/components/Step3_Preview";
+import Step3_Delivery from "@/components/Step3_Delivery";
+import Step4_Preview from "@/components/Step4_Preview";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
+import { isShippingComplete } from "@/utils/shipping";
 
 // Exported default wraps inner component in Suspense to satisfy Next.js prerender requirements for useSearchParams
 export default function OrderPage() {
@@ -26,6 +28,7 @@ function OrderPageInner() {
     masterData,
     order,
     updateOrder,
+    updateShipping,
     nextStep,
     prevStep,
   } = useOrderForm();
@@ -60,6 +63,14 @@ function OrderPageInner() {
         thread1: order.threads[0] || "",
         thread2: order.threads[1] || "",
         thread3: order.threads[2] || "",
+        deliveryMethod: order.deliveryMethod === "shipping" ? "配送" : "当日渡し",
+        shippingFee: order.shippingFee,
+        shipZip: order.shipping.zip,
+        shipAddress: order.shipping.address,
+        shipBuilding: order.shipping.building,
+        shipName: order.shipping.name,
+        shipPhone: order.shipping.phone,
+        shipEmail: order.shipping.email,
       };
 
       const response = await fetch(ACTIVE_GAS_URL, {
@@ -89,6 +100,10 @@ function OrderPageInner() {
     order.itemSize &&
     order.threads.length === threadLimit &&
     order.threads.every(t => t !== "");
+
+  const isStep3Valid =
+    order.deliveryMethod === "pickup" ||
+    (order.deliveryMethod === "shipping" && isShippingComplete(order.shipping));
 
   if (loading) {
     return (
@@ -144,13 +159,13 @@ function OrderPageInner() {
 
   return (
     <div className="min-h-screen bg-base-bg">
-      <div className={`container ${step === 3 ? "container-wide" : ""}`}>
+      <div className={`container ${step === 4 ? "container-wide" : ""}`}>
         <header className={`text-center pt-8 ${step === 1 ? "mb-12" : "mb-4"}`}>
           {step === 1 && (
             <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
           )}
           <div className={`flex justify-center gap-3 ${step === 1 ? "mt-6" : ""}`}>
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${step === s ? "bg-accent-gold w-8" : step > s ? "bg-text-main" : "bg-border"}`}
@@ -182,7 +197,16 @@ function OrderPageInner() {
           )}
 
           {step === 3 && (
-            <Step3_Preview
+            <Step3_Delivery
+              order={order}
+              masterData={masterData}
+              onUpdate={updateOrder}
+              onUpdateShipping={updateShipping}
+            />
+          )}
+
+          {step === 4 && (
+            <Step4_Preview
               order={order}
             />
           )}
@@ -208,6 +232,16 @@ function OrderPageInner() {
             )}
 
             {step === 3 && (
+              <button
+                className="btn-nav btn-continue"
+                disabled={!isStep3Valid}
+                onClick={nextStep}
+              >
+                CONTINUE <span>→</span>
+              </button>
+            )}
+
+            {step === 4 && (
               <button
                 className="btn-nav btn-continue"
                 disabled={isSubmitting}
