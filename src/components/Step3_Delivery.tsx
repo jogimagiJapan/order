@@ -39,6 +39,8 @@ export default function Step3_Delivery({
     const formRef = useRef<HTMLElement>(null);
     const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [buildingSkipped, setBuildingSkipped] = useState(false);
+    const [zipStatus, setZipStatus] = useState<"idle" | "loading" | "filled" | "notfound">("idle");
+    const lookedUpZip = useRef("");
 
     const shipping = order.shipping;
     const isShipping = order.deliveryMethod === "shipping";
@@ -143,6 +145,40 @@ export default function Step3_Delivery({
         return () => clearTimeout(timer);
     }, [isShipping]);
 
+    // Prefill the address from the postal code. The field stays editable, and a
+    // new postal code replaces the prefilled value.
+    useEffect(() => {
+        const digits = normalizeZip(shipping.zip);
+        if (!isShipping || digits.length !== 7) return;
+        if (lookedUpZip.current === digits) return;
+        lookedUpZip.current = digits;
+
+        let cancelled = false;
+        setZipStatus("loading");
+
+        fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${digits}`)
+            .then(res => res.json())
+            .then(json => {
+                if (cancelled) return;
+                const found = json?.results?.[0];
+                if (!found) {
+                    setZipStatus("notfound");
+                    return;
+                }
+                onUpdateShipping({
+                    address: `${found.address1}${found.address2}${found.address3}`,
+                });
+                setZipStatus("filled");
+            })
+            .catch(() => {
+                if (!cancelled) setZipStatus("notfound");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isShipping, shipping.zip, onUpdateShipping]);
+
     const rates = getShippingRates(masterData.shipping);
     const isRemote = shipping.isRemoteManual || isRemoteZip(shipping.zip, rates.remotePrefixes);
 
@@ -232,6 +268,22 @@ export default function Step3_Delivery({
                                         />
                                         <span>離島に該当する（送料が加算されます）</span>
                                     </label>
+                                )}
+
+                                {field.key === "address" && zipStatus === "loading" && (
+                                    <p className="ship-note">郵便番号から住所を取得しています...</p>
+                                )}
+
+                                {field.key === "address" && zipStatus === "filled" && (
+                                    <p className="ship-note">
+                                        郵便番号から自動入力しました。番地を追記・修正してください
+                                    </p>
+                                )}
+
+                                {field.key === "address" && zipStatus === "notfound" && (
+                                    <p className="ship-note is-warn">
+                                        住所を自動取得できませんでした。手入力してください
+                                    </p>
                                 )}
 
                                 {field.key === "building" && !buildingDone && (
