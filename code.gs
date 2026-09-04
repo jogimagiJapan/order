@@ -139,6 +139,7 @@ function setupSpreadsheet() {
     deliverySheet = ss.insertSheet(DELIVERY_SHEET_NAME);
     deliverySheet.appendRow(DELIVERY_HEADERS);
   }
+  applyDeliveryTextColumns(deliverySheet);
 
   // 5. Mail Template Sheet
   let mailSheet = ss.getSheetByName(MAIL_TEMPLATE_SHEET_NAME);
@@ -417,6 +418,7 @@ function appendDeliveryRow(ss, timestamp, data, shippingFee) {
     deliverySheet = ss.insertSheet(DELIVERY_SHEET_NAME);
     deliverySheet.appendRow(DELIVERY_HEADERS);
   }
+  applyDeliveryTextColumns(deliverySheet);
   
   deliverySheet.appendRow([
     timestamp,
@@ -434,6 +436,51 @@ function appendDeliveryRow(ss, timestamp, data, shippingFee) {
     "",
     ""
   ]);
+}
+
+/**
+ * 郵便番号(C列)・電話番号(G列)・送り状番号(L列) を書式「テキスト」にする。
+ * 数値として扱われると先頭の 0 が失われるため。
+ */
+function applyDeliveryTextColumns(sheet) {
+  const rows = Math.max(sheet.getMaxRows() - 1, 1);
+  [3, 7, 12].forEach(function (col) {
+    sheet.getRange(2, col, rows, 1).setNumberFormat("@");
+  });
+}
+
+/**
+ * 既存データの先頭 0 を復元する（郵便番号は7桁、電話番号は10〜11桁に整形）。
+ * メニューやエディタから手動で実行するための補助関数。
+ */
+function repairDeliveryLeadingZeros() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
+  if (!sheet) return;
+  
+  applyDeliveryTextColumns(sheet);
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  
+  const pad = function (value, length) {
+    const digits = String(value).replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.length < length ? "0".repeat(length - digits.length) + digits : digits;
+  };
+  
+  const zipRange = sheet.getRange(2, 3, lastRow - 1, 1);
+  zipRange.setValues(zipRange.getValues().map(function (row) {
+    return [pad(row[0], 7)];
+  }));
+  
+  const phoneRange = sheet.getRange(2, 7, lastRow - 1, 1);
+  phoneRange.setValues(phoneRange.getValues().map(function (row) {
+    const digits = String(row[0]).replace(/\D/g, "");
+    if (!digits) return [""];
+    // 9桁なら固定電話、10桁なら携帯として先頭の 0 が落ちたとみなす
+    return [digits.length === 9 || digits.length === 10 ? "0" + digits : digits];
+  }));
 }
 
 /**
