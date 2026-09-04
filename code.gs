@@ -9,6 +9,37 @@ const EXTRACTION_SHEET_NAME = "ファイル名抽出シート";
 const SUBMISSION_SHEET_NAME = "送信情報収集シート";
 const MASTER_DATA_SHEET_NAME = "マスタデータ";
 const DELIVERY_SHEET_NAME = "配送情報シート";
+const MAIL_TEMPLATE_SHEET_NAME = "メール文面";
+
+// メール文面シートの初期値。シート側を編集すればそちらが優先される。
+const DEFAULT_MAIL_FROM = "order@jogimagi.com";
+const DEFAULT_MAIL_SENDER_NAME = "SEW THE SOUND";
+const DEFAULT_MAIL_SUBJECT = "【SEW THE SOUND】ご注文ありがとうございます";
+const DEFAULT_MAIL_BODY = [
+  "{{name}} 様",
+  "",
+  "SEW THE SOUND です。この度はご注文いただきありがとうございます。",
+  "以下の内容で承りました。商品の発送準備が整い次第、改めてご連絡いたします。",
+  "",
+  "──────────────",
+  "ご注文ID: {{orderId}}",
+  "プラン: {{plan}}",
+  "オプション: {{option}}",
+  "アイテム: {{item}} / {{itemColor}} / {{itemSize}}",
+  "糸: {{threads}}",
+  "",
+  "お届け先:",
+  "〒{{zip}}",
+  "{{address}}",
+  "TEL {{phone}}",
+  "",
+  "送料: ¥{{shippingFee}}",
+  "合計金額（税込）: ¥{{totalPrice}}",
+  "──────────────",
+  "",
+  "※このメールは送信専用です。",
+  "SEW THE SOUND"
+].join("\n");
 
 const SUBMISSION_HEADERS = [
   "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー",
@@ -107,6 +138,40 @@ function setupSpreadsheet() {
   if (!deliverySheet) {
     deliverySheet = ss.insertSheet(DELIVERY_SHEET_NAME);
     deliverySheet.appendRow(DELIVERY_HEADERS);
+  }
+
+  // 5. Mail Template Sheet
+  let mailSheet = ss.getSheetByName(MAIL_TEMPLATE_SHEET_NAME);
+  if (!mailSheet) {
+    mailSheet = ss.insertSheet(MAIL_TEMPLATE_SHEET_NAME);
+    mailSheet.appendRow(["項目", "内容"]);
+    mailSheet.appendRow(["差出人メールアドレス", DEFAULT_MAIL_FROM]);
+    mailSheet.appendRow(["差出人名", DEFAULT_MAIL_SENDER_NAME]);
+    mailSheet.appendRow(["件名", DEFAULT_MAIL_SUBJECT]);
+    mailSheet.appendRow(["本文", DEFAULT_MAIL_BODY]);
+    mailSheet.appendRow(["", ""]);
+    mailSheet.appendRow(["差し込みタグ", [
+      "{{name}} お名前",
+      "{{orderId}} ご注文ID",
+      "{{plan}} プラン",
+      "{{option}} オプション",
+      "{{item}} アイテム",
+      "{{itemColor}} アイテムカラー",
+      "{{itemSize}} アイテムサイズ",
+      "{{threads}} 糸（カンマ区切り）",
+      "{{zip}} 郵便番号",
+      "{{address}} 住所（建物名を含む）",
+      "{{building}} 建物名・部屋番号",
+      "{{phone}} 電話番号",
+      "{{email}} メールアドレス",
+      "{{shippingFee}} 送料",
+      "{{totalPrice}} 合計金額"
+    ].join("\n")]);
+
+    mailSheet.setColumnWidth(1, 180);
+    mailSheet.setColumnWidth(2, 560);
+    mailSheet.getRange("B5").setWrap(true);
+    mailSheet.getRange("B7").setWrap(true);
   }
 }
 
@@ -328,7 +393,7 @@ function doPost(e) {
     
     if (deliveryMethod === "配送") {
       appendDeliveryRow(ss, timestamp, data, shippingFee);
-      sendDeliveryConfirmationMail(data, shippingFee);
+      sendDeliveryConfirmationMail(ss, data, shippingFee);
     }
     
     return ContentService.createTextOutput(JSON.stringify({ result: 'success' }))
@@ -372,46 +437,93 @@ function appendDeliveryRow(ss, timestamp, data, shippingFee) {
 }
 
 /**
+ * Reads the editable mail template from the spreadsheet.
+ * Missing sheet or blank cells fall back to the defaults above.
+ */
+function getMailTemplate(ss) {
+  const template = {
+    from: DEFAULT_MAIL_FROM,
+    senderName: DEFAULT_MAIL_SENDER_NAME,
+    subject: DEFAULT_MAIL_SUBJECT,
+    body: DEFAULT_MAIL_BODY
+  };
+  
+  const sheet = ss.getSheetByName(MAIL_TEMPLATE_SHEET_NAME);
+  if (!sheet) return template;
+  
+  sheet.getDataRange().getValues().forEach(function (row) {
+    const key = String(row[0]).trim();
+    const value = row[1];
+    if (value === "" || value === null || value === undefined) return;
+    
+    if (key === "差出人メールアドレス") template.from = String(value).trim();
+    if (key === "差出人名") template.senderName = String(value).trim();
+    if (key === "件名") template.subject = String(value);
+    if (key === "本文") template.body = String(value);
+  });
+  
+  return template;
+}
+
+/**
+ * Replaces {{tag}} placeholders with the order values.
+ */
+function renderMailTemplate(text, vars) {
+  return String(text).replace(/\{\{(\w+)\}\}/g, function (match, key) {
+    return vars[key] !== undefined && vars[key] !== null ? vars[key] : "";
+  });
+}
+
+/**
  * Sends an order confirmation mail to the customer.
  * Failures are logged only, so that a mail error never rejects the order.
  */
-function sendDeliveryConfirmationMail(data, shippingFee) {
+function sendDeliveryConfirmationMail(ss, data, shippingFee) {
   try {
     const to = data.shipEmail;
     if (!to) return;
     
-    const address = [data.shipAddress, data.shipBuilding].filter(Boolean).join(" ");
-    const body = [
-      data.shipName + " 様",
-      "",
-      "SEW THE SOUND です。この度はご注文いただきありがとうございます。",
-      "以下の内容で承りました。商品の発送準備が整い次第、改めてご連絡いたします。",
-      "",
-      "──────────────",
-      "ご注文ID: " + data.selectedId,
-      "プラン: " + data.plan,
-      "オプション: " + (data.option || "なし"),
-      "アイテム: " + data.item + " / " + data.itemColor + " / " + data.itemSize,
-      "糸: " + [data.thread1, data.thread2, data.thread3].filter(Boolean).join(", "),
-      "",
-      "お届け先:",
-      "〒" + (data.shipZip || ""),
-      address,
-      "TEL " + (data.shipPhone || ""),
-      "",
-      "送料: ¥" + Number(shippingFee).toLocaleString(),
-      "合計金額（税込）: ¥" + Number(data.totalPrice).toLocaleString(),
-      "──────────────",
-      "",
-      "※このメールは送信専用です。",
-      "SEW THE SOUND"
-    ].join("\n");
+    const template = getMailTemplate(ss);
+    const vars = {
+      name: data.shipName || "",
+      orderId: data.selectedId || "",
+      plan: data.plan || "",
+      option: data.option || "なし",
+      item: data.item || "",
+      itemColor: data.itemColor || "",
+      itemSize: data.itemSize || "",
+      threads: [data.thread1, data.thread2, data.thread3].filter(Boolean).join(", "),
+      zip: data.shipZip || "",
+      address: [data.shipAddress, data.shipBuilding].filter(Boolean).join(" "),
+      building: data.shipBuilding || "",
+      phone: data.shipPhone || "",
+      email: data.shipEmail || "",
+      shippingFee: Number(shippingFee || 0).toLocaleString(),
+      totalPrice: Number(data.totalPrice || 0).toLocaleString()
+    };
     
-    MailApp.sendEmail({
-      to: to,
-      subject: "【SEW THE SOUND】ご注文ありがとうございます",
-      body: body
-    });
+    const options = {
+      name: template.senderName,
+      replyTo: template.from
+    };
+    
+    // from は Gmail に登録済みのエイリアスでのみ指定できる
+    const aliases = GmailApp.getAliases();
+    if (template.from && aliases.indexOf(template.from) !== -1) {
+      options.from = template.from;
+    } else {
+      console.warn(
+        "差出人 " + template.from + " は Gmail のエイリアス未登録のため、" +
+        "スクリプト所有者のアドレスで送信します（Gmail の設定 > アカウント > 名前 で追加してください）"
+      );
+    }
+    
+    GmailApp.sendEmail(
+      to,
+      renderMailTemplate(template.subject, vars),
+      renderMailTemplate(template.body, vars),
+      options
+    );
   } catch (mailError) {
     console.error("Failed to send confirmation mail: " + mailError);
   }
