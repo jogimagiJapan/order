@@ -230,6 +230,12 @@ function OrderDetail({
     onToggleCompleted: () => void;
     getThreadColor: (id: string) => { id: string; hex: string; name: string } | undefined;
 }) {
+    const [shippingOpen, setShippingOpen] = useState(false);
+
+    useEffect(() => {
+        setShippingOpen(false);
+    }, [current.selectedId]);
+
     const formattedTimestamp = new Date(current.timestamp).toLocaleString("ja-JP", {
         year: "numeric",
         month: "2-digit",
@@ -238,13 +244,16 @@ function OrderDetail({
         minute: "2-digit",
     });
     const displayId = parseDisplayId(current.selectedId);
+    const idLine = displayId.username
+        ? `${displayId.time}_${displayId.username}`
+        : displayId.time;
     const isShippingOrder = current.deliveryMethod === "配送";
     const delivery = current.delivery;
     const showGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
 
     return (
         <section className={`instruction-sheet mb-4 animate-fade-in ${isCompleted ? "is-completed" : ""}`}>
-            <div className="admin-card-header mb-3">
+            <div className="admin-card-header mb-4">
                 <div className="admin-header-row">
                     <div className="admin-badge-group">
                         <span className={`admin-badge ${isCompleted ? "is-done" : ""}`}>
@@ -256,8 +265,7 @@ function OrderDetail({
                 </div>
 
                 <div className="admin-display-id">
-                    <span className="id-time">{displayId.time}</span>
-                    {displayId.username && <span className="id-user">{displayId.username}</span>}
+                    <span className="id-line">{idLine}</span>
                 </div>
 
                 <div className="admin-header-row admin-header-row-end">
@@ -274,7 +282,7 @@ function OrderDetail({
                 </div>
             </div>
 
-            <div className="admin-info-grid mb-3">
+            <div className="admin-info-grid mb-4">
                 <div className="admin-grid-2">
                     <div className="admin-grid-val">
                         <p className="value">{current.plan}</p>
@@ -323,7 +331,7 @@ function OrderDetail({
                 </div>
             </div>
 
-            <div className="mb-3">
+            <div className="mb-4">
                 <div className="thread-preview-grid">
                     {[current.thread1, current.thread2, current.thread3].map((tid, i) => {
                         const color = getThreadColor(tid);
@@ -331,7 +339,7 @@ function OrderDetail({
                         return (
                             <div key={i} className="thread-preview-item">
                                 <div
-                                    className="color-dot-large"
+                                    className="color-swatch"
                                     style={{ backgroundColor: color?.hex }}
                                 />
                                 <span className="thread-id-name">
@@ -351,30 +359,40 @@ function OrderDetail({
             )}
 
             {isShippingOrder && (
-                <div className="admin-delivery">
-                    <div className="admin-delivery-head">
-                        <h3 className="admin-label">Shipping To</h3>
-                        {delivery?.progress && (
-                            <span className="admin-delivery-progress">{delivery.progress}</span>
-                        )}
-                    </div>
-                    {delivery ? (
-                        <div className="admin-delivery-body">
-                            <p className="admin-delivery-name">{delivery.name} 様</p>
-                            <p>〒{delivery.zip}</p>
-                            <p>{delivery.address}</p>
-                            {delivery.building && <p>{delivery.building}</p>}
-                            <p>{delivery.phone}</p>
-                            <p>{delivery.email}</p>
-                            <div className="admin-delivery-meta">
-                                <span>送料 ¥{(delivery.shippingFee || 0).toLocaleString()}</span>
-                                <span>送り状 {delivery.trackingNumber || "未発行"}</span>
+                <div className={`admin-delivery ${shippingOpen ? "is-open" : ""}`}>
+                    <button
+                        type="button"
+                        className="admin-delivery-toggle"
+                        onClick={() => setShippingOpen(open => !open)}
+                        aria-expanded={shippingOpen}
+                    >
+                        <span className="admin-label">Shipping To</span>
+                        <span className="admin-delivery-toggle-meta">
+                            {delivery?.progress && (
+                                <span className="admin-delivery-progress">{delivery.progress}</span>
+                            )}
+                            <span className="admin-delivery-chevron">{shippingOpen ? "▲" : "▼"}</span>
+                        </span>
+                    </button>
+                    {shippingOpen && (
+                        delivery ? (
+                            <div className="admin-delivery-body">
+                                <p className="admin-delivery-name">{delivery.name} 様</p>
+                                <p>〒{delivery.zip}</p>
+                                <p>{delivery.address}</p>
+                                {delivery.building && <p>{delivery.building}</p>}
+                                <p>{delivery.phone}</p>
+                                <p>{delivery.email}</p>
+                                <div className="admin-delivery-meta">
+                                    <span>送料 ¥{(delivery.shippingFee || 0).toLocaleString()}</span>
+                                    <span>送り状 {delivery.trackingNumber || "未発行"}</span>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <p className="admin-delivery-empty">
-                            配送先データが見つかりません（配送情報シートをご確認ください）
-                        </p>
+                        ) : (
+                            <p className="admin-delivery-empty">
+                                配送先データが見つかりません（配送情報シートをご確認ください）
+                            </p>
+                        )
                     )}
                 </div>
             )}

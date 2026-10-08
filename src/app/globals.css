@@ -975,17 +975,37 @@ textarea:focus {
 }
 
 .admin-delivery {
-  padding: 20px;
+  padding: 0;
   border: 1px solid #fbcfe1;
-  border-radius: 16px;
+  border-radius: 12px;
   background-color: #fff7fa;
+  overflow: hidden;
 }
 
-.admin-delivery-head {
+.admin-delivery-toggle {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 12px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-delivery-toggle-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-delivery-chevron {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
 }
 
 .admin-delivery-progress {
@@ -996,10 +1016,11 @@ textarea:focus {
 }
 
 .admin-delivery-body {
+  padding: 0 14px 14px;
   font-size: 0.8rem;
   font-weight: 600;
   color: #475569;
-  line-height: 1.8;
+  line-height: 1.6;
   word-break: break-all;
 }
 
@@ -1082,10 +1103,21 @@ textarea:focus {
 
 .admin-display-id {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  min-width: 0;
   line-height: 1.15;
+}
+
+.admin-display-id .id-line {
+  display: block;
+  max-width: 100%;
+  font-size: clamp(1.25rem, 5.5vw, 1.85rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-display-id .id-time,
@@ -1221,137 +1253,130 @@ textarea:focus {
 }
 
 .thread-id-name {
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 12px;
   font-weight: 900;
   color: #0f172a;
   letter-spacing: 0.02em;
 }
 
-/* Admin compact density — fit more on one screen */
+.color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 72px;
+  border-radius: 10px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  background-color: #eee;
+}
+
+/* Admin readable density — fit key info without cramped packing */
 .admin-compact .instruction-sheet {
-  padding: 16px 14px;
-  border-radius: 14px;
+  padding: 18px 16px;
+  border-radius: 16px;
 }
 
 .admin-compact .admin-card-header {
-  gap: 6px;
+  gap: 10px;
 }
 
 .admin-compact .admin-display-id {
-  margin: 2px 0;
-}
-
-.admin-compact .admin-display-id .id-time,
-.admin-compact .admin-display-id .id-user {
-  font-size: clamp(1.4rem, 7vw, 2rem);
-  line-height: 1.05;
+  margin: 4px 0;
 }
 
 .admin-compact .admin-price {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
 
 .admin-compact .admin-complete-btn {
-  padding: 6px 12px;
-  font-size: 0.7rem;
+  padding: 8px 14px;
+  font-size: 0.75rem;
 }
 
 .admin-compact .admin-info-grid {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .admin-compact .admin-grid-2 {
-  gap: 6px;
+  gap: 8px;
 }
 
 .admin-compact .admin-grid-val {
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 12px 12px;
+  border-radius: 10px;
 }
 
 .admin-compact .admin-grid-val .value {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 
 .admin-compact .admin-grid-val .value.value-wrap {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .admin-compact .admin-grid-val .label-small {
-  margin-top: 2px;
-  font-size: 0.55rem;
+  margin-top: 4px;
+  font-size: 0.6rem;
 }
 
 .admin-compact .thread-preview-grid {
-  gap: 6px;
-  padding: 4px 0;
+  gap: 10px;
+  padding: 2px 0;
 }
 
 .admin-compact .thread-preview-item {
-  gap: 2px;
+  gap: 4px;
 }
 
-.admin-compact .color-dot-large {
-  width: 36px;
-  height: 36px;
-  border-width: 2px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+.admin-compact .color-swatch {
+  max-width: 64px;
+  border-radius: 8px;
 }
 
 .admin-compact .thread-id-name {
-  margin-top: 2px;
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
 }
 
 .admin-compact .admin-remarks {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 10px;
 }
 
 .admin-compact .admin-remarks-text {
-  font-size: 0.85rem;
-  line-height: 1.35;
-}
-
-.admin-compact .admin-delivery {
-  padding: 12px;
-  border-radius: 10px;
-}
-
-.admin-compact .admin-delivery-head {
-  margin-bottom: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .admin-compact .admin-delivery-body {
-  font-size: 0.75rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .admin-compact .admin-delivery-name {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .admin-compact .admin-delivery-meta {
-  margin-top: 6px;
-  padding-top: 6px;
-  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  gap: 12px;
 }
 
 .admin-compact .admin-search-input,
 .admin-compact .admin-search-clear {
-  padding: 8px 12px;
+  padding: 10px 12px;
 }
 
 .admin-compact .history-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .admin-compact .history-item {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 10px;
 }
 
