@@ -1221,11 +1221,138 @@ textarea:focus {
 }
 
 .thread-id-name {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 11px;
   font-weight: 900;
   color: #0f172a;
   letter-spacing: 0.02em;
+}
+
+/* Admin compact density — fit more on one screen */
+.admin-compact .instruction-sheet {
+  padding: 16px 14px;
+  border-radius: 14px;
+}
+
+.admin-compact .admin-card-header {
+  gap: 6px;
+}
+
+.admin-compact .admin-display-id {
+  margin: 2px 0;
+}
+
+.admin-compact .admin-display-id .id-time,
+.admin-compact .admin-display-id .id-user {
+  font-size: clamp(1.4rem, 7vw, 2rem);
+  line-height: 1.05;
+}
+
+.admin-compact .admin-price {
+  font-size: 1.1rem;
+}
+
+.admin-compact .admin-complete-btn {
+  padding: 6px 12px;
+  font-size: 0.7rem;
+}
+
+.admin-compact .admin-info-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-compact .admin-grid-2 {
+  gap: 6px;
+}
+
+.admin-compact .admin-grid-val {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.admin-compact .admin-grid-val .value {
+  font-size: 0.95rem;
+}
+
+.admin-compact .admin-grid-val .value.value-wrap {
+  font-size: 0.85rem;
+}
+
+.admin-compact .admin-grid-val .label-small {
+  margin-top: 2px;
+  font-size: 0.55rem;
+}
+
+.admin-compact .thread-preview-grid {
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.admin-compact .thread-preview-item {
+  gap: 2px;
+}
+
+.admin-compact .color-dot-large {
+  width: 36px;
+  height: 36px;
+  border-width: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.admin-compact .thread-id-name {
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+.admin-compact .admin-remarks {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.admin-compact .admin-remarks-text {
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.admin-compact .admin-delivery {
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.admin-compact .admin-delivery-head {
+  margin-bottom: 6px;
+}
+
+.admin-compact .admin-delivery-body {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.admin-compact .admin-delivery-name {
+  font-size: 0.9rem;
+}
+
+.admin-compact .admin-delivery-meta {
+  margin-top: 6px;
+  padding-top: 6px;
+  gap: 10px;
+}
+
+.admin-compact .admin-search-input,
+.admin-compact .admin-search-clear {
+  padding: 8px 12px;
+}
+
+.admin-compact .history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-compact .history-item {
+  padding: 8px 10px;
+  border-radius: 10px;
 }
 
 .spinner-container {

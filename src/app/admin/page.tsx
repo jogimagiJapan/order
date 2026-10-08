@@ -117,39 +117,15 @@ export default function AdminDashboard() {
     const getThreadColor = (id: string) => resolveThreadColor(id);
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-32">
-            <div className="container py-6">
-                <header className="mb-4 px-2">
-                    <h1 className="admin-dashboard-title mb-4">DASHBOARD</h1>
-                    <div className="admin-search">
-                        <input
-                            className="admin-search-input"
-                            type="search"
-                            placeholder="ID検索（例: 005608 / username）"
-                            value={idQuery}
-                            onChange={(e) => {
-                                setIdQuery(e.target.value);
-                                setSelectedIndex(0);
-                            }}
-                        />
-                        {idQuery.trim() && (
-                            <button
-                                type="button"
-                                className="admin-search-clear"
-                                onClick={() => {
-                                    setIdQuery("");
-                                    setSelectedIndex(0);
-                                }}
-                            >
-                                クリア
-                            </button>
-                        )}
-                    </div>
+        <div className="bg-slate-50 min-h-screen pb-24 admin-compact">
+            <div className="container py-3">
+                <header className="mb-3 px-2">
+                    <h1 className="admin-dashboard-title">DASHBOARD</h1>
                 </header>
 
                 <main>
                     {!current ? (
-                        <section className="instruction-sheet mb-8 text-center py-12">
+                        <section className="instruction-sheet mb-4 text-center py-8">
                             <p className="text-sub font-bold">「{idQuery}」に一致する注文はありません</p>
                         </section>
                     ) : (
@@ -162,10 +138,34 @@ export default function AdminDashboard() {
                     )}
 
                     <section>
-                        <h3 className="admin-label mb-4 ml-2">
+                        <h3 className="admin-label mb-2 ml-2">
                             History{idQuery.trim() ? `（${filteredSubmissions.length}件）` : ""}
                         </h3>
-                        <div className="history-list space-y-2">
+                        <div className="admin-search mb-2">
+                            <input
+                                className="admin-search-input"
+                                type="search"
+                                placeholder="ID検索（例: 005608 / username）"
+                                value={idQuery}
+                                onChange={(e) => {
+                                    setIdQuery(e.target.value);
+                                    setSelectedIndex(0);
+                                }}
+                            />
+                            {idQuery.trim() && (
+                                <button
+                                    type="button"
+                                    className="admin-search-clear"
+                                    onClick={() => {
+                                        setIdQuery("");
+                                        setSelectedIndex(0);
+                                    }}
+                                >
+                                    クリア
+                                </button>
+                            )}
+                        </div>
+                        <div className="history-list">
                             {filteredSubmissions.map((sub, idx) => {
                                 const subCompleted = completedIds[sub.selectedId] || false;
                                 const subDisplayId = parseDisplayId(sub.selectedId);
@@ -243,8 +243,8 @@ function OrderDetail({
     const showGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
 
     return (
-        <section className={`instruction-sheet mb-8 animate-fade-in ${isCompleted ? "is-completed" : ""}`}>
-            <div className="admin-card-header mb-8">
+        <section className={`instruction-sheet mb-4 animate-fade-in ${isCompleted ? "is-completed" : ""}`}>
+            <div className="admin-card-header mb-3">
                 <div className="admin-header-row">
                     <div className="admin-badge-group">
                         <span className={`admin-badge ${isCompleted ? "is-done" : ""}`}>
@@ -274,7 +274,7 @@ function OrderDetail({
                 </div>
             </div>
 
-            <div className="grid gap-3 mb-8">
+            <div className="admin-info-grid mb-3">
                 <div className="admin-grid-2">
                     <div className="admin-grid-val">
                         <p className="value">{current.plan}</p>
@@ -323,7 +323,7 @@ function OrderDetail({
                 </div>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-3">
                 <div className="thread-preview-grid">
                     {[current.thread1, current.thread2, current.thread3].map((tid, i) => {
                         const color = getThreadColor(tid);
@@ -332,7 +332,7 @@ function OrderDetail({
                             <div key={i} className="thread-preview-item">
                                 <div
                                     className="color-dot-large"
-                                    style={{ backgroundColor: color?.hex, width: 60, height: 60 }}
+                                    style={{ backgroundColor: color?.hex }}
                                 />
                                 <span className="thread-id-name">
                                     {tid}:{color?.name || "—"}
@@ -344,8 +344,8 @@ function OrderDetail({
             </div>
 
             {current.notes && (
-                <div className="admin-remarks mb-8">
-                    <h3 className="admin-label mb-2">Remarks</h3>
+                <div className="admin-remarks mb-3">
+                    <h3 className="admin-label mb-1">Remarks</h3>
                     <p className="admin-remarks-text">{current.notes}</p>
                 </div>
             )}
