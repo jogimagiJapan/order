@@ -296,13 +296,13 @@ function OrderDetail({
 
                 {showGps && (
                     <>
-                        <div className="admin-grid-val admin-grid-full">
-                            <p className="value value-wrap">{current.gpsDatetime || "-"}</p>
-                            <p className="label-small">GPS Time</p>
+                        <div className="admin-gps-box">
+                            <span className="admin-gps-index" aria-hidden>1</span>
+                            <p className="admin-gps-text">{current.gpsDatetime || "-"}</p>
                         </div>
-                        <div className="admin-grid-val admin-grid-full">
-                            <p className="value value-wrap">{current.gpsLocation || "-"}</p>
-                            <p className="label-small">GPS Location</p>
+                        <div className="admin-gps-box">
+                            <span className="admin-gps-index" aria-hidden>2</span>
+                            <p className="admin-gps-text">{current.gpsLocation || "-"}</p>
                         </div>
                     </>
                 )}

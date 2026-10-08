@@ -1111,13 +1111,46 @@ textarea:focus {
 .admin-display-id .id-line {
   display: block;
   max-width: 100%;
-  font-size: clamp(1.25rem, 5.5vw, 1.85rem);
+  font-size: clamp(1.55rem, 7vw, 2.25rem);
   font-weight: 900;
   letter-spacing: -0.03em;
   color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.admin-gps-box {
+  position: relative;
+  width: 100%;
+  padding: 14px 12px 12px 28px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  text-align: left;
+}
+
+.admin-gps-index {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.admin-gps-text {
+  margin: 0;
+  font-size: clamp(1.15rem, 4.8vw, 1.45rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #0f172a;
+  line-height: 1.25;
+  word-break: break-all;
+  font-variant-numeric: tabular-nums;
+  /* 最大20文字が1〜2行で収まる上限 */
+  max-width: 100%;
 }
 
 .admin-display-id .id-time,
@@ -1285,12 +1318,22 @@ textarea:focus {
 }
 
 .admin-compact .admin-price {
-  font-size: 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #64748b;
 }
 
 .admin-compact .admin-complete-btn {
-  padding: 8px 14px;
-  font-size: 0.75rem;
+  padding: 5px 10px;
+  font-size: 0.65rem;
+}
+
+.admin-compact .admin-gps-box {
+  padding: 16px 14px 14px 30px;
+}
+
+.admin-compact .admin-gps-text {
+  font-size: clamp(1.2rem, 5vw, 1.5rem);
 }
 
 .admin-compact .admin-info-grid {
