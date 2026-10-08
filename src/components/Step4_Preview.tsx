@@ -98,12 +98,13 @@ export default function Step4_Preview({
                             const color = getThreadColor(tid);
                             return (
                                 <div key={i} className="thread-preview-item animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
-                                    <span className="text-[10px] font-black leading-none mb-2">{tid}</span>
                                     <div
                                         className="color-dot-large"
                                         style={{ backgroundColor: color?.hex }}
                                     />
-                                    <span className="text-[8px] text-sub font-bold uppercase mt-2">{color?.name}</span>
+                                    <span className="thread-id-name">
+                                        {tid}:{color?.name || "—"}
+                                    </span>
                                 </div>
                             );
                         })}

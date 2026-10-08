@@ -573,7 +573,7 @@ function doGet(e) {
     });
   }
   
-  // Get latest 6 submissions for admin dashboard
+  // Get latest 10 submissions for admin dashboard
   const submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
   const submissionData = submissionSheet.getDataRange().getValues();
   const submissionHeader = submissionData[0] || [];
@@ -586,7 +586,7 @@ function doGet(e) {
     const v = row[i];
     return v === "" || v === null || v === undefined ? fallback : v;
   };
-  const submissions = submissionData.slice(1).reverse().slice(0, 6).map(row => {
+  const submissions = submissionData.slice(1).reverse().slice(0, 10).map(row => {
     const selectedId = cell(row, "選択ID", row[1]);
     return {
       timestamp: cell(row, "タイムスタンプ", row[0]),

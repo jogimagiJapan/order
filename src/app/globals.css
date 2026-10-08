@@ -1144,11 +1144,21 @@ textarea:focus {
   text-align: center;
 }
 
+.admin-grid-val.admin-grid-full {
+  width: 100%;
+}
+
 .admin-grid-val .value {
   font-size: 1.25rem;
   font-weight: 900;
   color: var(--text-main);
   line-height: 1.2;
+}
+
+.admin-grid-val .value.value-wrap {
+  font-size: 1rem;
+  word-break: break-all;
+  line-height: 1.35;
 }
 
 .admin-grid-val .label-small {
@@ -1158,6 +1168,64 @@ textarea:focus {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 4px;
+}
+
+.admin-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-search-input {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.admin-search-clear {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-sub);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-remarks {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+}
+
+.admin-remarks-text {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.5;
+  color: #dc2626;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thread-id-name {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: 0.02em;
 }
 
 .spinner-container {
