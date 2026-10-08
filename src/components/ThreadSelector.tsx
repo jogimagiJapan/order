@@ -1,20 +1,21 @@
 "use client";
 
-import { THREAD_COLORS } from "@/constants/colors";
+import { ThreadColor } from "@/constants/colors";
 import { useState, useEffect } from "react";
 
 export default function ThreadSelector({
     limit,
     selected,
+    colors,
     onToggle
 }: {
     limit: number;
     selected: string[];
+    colors: ThreadColor[];
     onToggle: (id: string, index?: number) => void;
 }) {
     const [activeIndex, setActiveIndex] = useState(0);
 
-    // Ensure activeIndex is within bounds if limit changes
     useEffect(() => {
         if (activeIndex >= limit) {
             setActiveIndex(0);
@@ -23,7 +24,6 @@ export default function ThreadSelector({
 
     const handlePaletteClick = (colorId: string) => {
         onToggle(colorId, activeIndex);
-        // Move to next slot automatically
         if (limit > 1) {
             setActiveIndex((prev) => (prev + 1) % limit);
         }
@@ -36,33 +36,37 @@ export default function ThreadSelector({
                 <span className="text-[10px] font-bold text-accent-gold uppercase tracking-widest">{selected.filter(s => s).length} / {limit} Selected</span>
             </div>
 
-            {/* Color Palette (Simplified) */}
-            <div className="thread-grid mb-10">
-                {THREAD_COLORS.map((color) => (
-                    <div key={color.id} className="chip-container">
-                        <div
-                            className="color-chip-large"
-                            style={{ backgroundColor: color.hex }}
-                            onClick={() => handlePaletteClick(color.id)}
-                        />
-                        <span className="text-[10px] font-black mt-2 text-sub">
-                            {color.id}
-                        </span>
-                    </div>
-                ))}
-            </div>
+            {colors.length > 0 ? (
+                <div className="thread-grid mb-10">
+                    {colors.map((color) => (
+                        <div key={color.id} className="chip-container">
+                            <div
+                                className="color-chip-large"
+                                style={{ backgroundColor: color.hex }}
+                                onClick={() => handlePaletteClick(color.id)}
+                            />
+                            <span className="text-[10px] font-black mt-2 text-sub">
+                                {color.id}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="thread-card text-center py-8 mb-10">
+                    <p className="text-sm text-sub italic">表示可能な糸色がありません（マスタを確認してください）</p>
+                </div>
+            )}
 
-            {/* Selection Slots */}
             <div className="thread-slots">
                 {Array.from({ length: limit }).map((_, i) => {
                     const colorId = selected[i];
-                    const colorObj = THREAD_COLORS.find(c => c.id === colorId);
+                    const colorObj = colors.find(c => c.id === colorId);
                     const isActive = activeIndex === i;
 
                     return (
                         <div
                             key={i}
-                            className={`slot-container ${isActive ? 'active' : ''}`}
+                            className={`slot-container ${isActive ? "active" : ""}`}
                             onClick={() => setActiveIndex(i)}
                         >
                             <span className="slot-label text-center">

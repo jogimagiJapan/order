@@ -25,6 +25,8 @@ const DEFAULT_MAIL_BODY = [
   "ご注文ID: {{orderId}}",
   "プラン: {{plan}}",
   "オプション: {{option}}",
+  "GPS日時: {{gpsDatetime}}",
+  "GPS緯度経度: {{gpsLocation}}",
   "音が聴けるカード: {{soundCard}}",
   "アイテム: {{item}} / {{itemColor}} / {{itemSize}}",
   "糸: {{threads}}",
@@ -45,11 +47,27 @@ const DEFAULT_MAIL_BODY = [
 const SUBMISSION_HEADERS = [
   "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー",
   "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス",
-  "受取方法", "送料", "音が聴けるカード"
+  "受取方法", "送料", "音が聴けるカード", "GPS日時", "GPS緯度経度"
 ];
 
 const OTHER_COLOR_ITEMS = "Tシャツ, ロンT, キッズT, トートバック";
 const OTHER_SIZE_ITEMS = "Tシャツ, ロンT, キッズT";
+const DEFAULT_GPS_LOCATION = "34.814733,135.378753";
+
+const DEFAULT_THREAD_COLORS = [
+  ["ThreadColor", "A", 0, "#ffffff|White", "表示"],
+  ["ThreadColor", "B", 0, "#212322|Black", "表示"],
+  ["ThreadColor", "C", 0, "#847f87|Gray", "表示"],
+  ["ThreadColor", "D", 0, "#006aad|Blue", "表示"],
+  ["ThreadColor", "E", 0, "#8ec5bd|Light Blue", "表示"],
+  ["ThreadColor", "F", 0, "#007a3e|Green", "表示"],
+  ["ThreadColor", "G", 0, "#b1d0a2|Pale Green", "表示"],
+  ["ThreadColor", "H", 0, "#d50032|Red", "表示"],
+  ["ThreadColor", "I", 0, "#f79fba|Pink", "表示"],
+  ["ThreadColor", "J", 0, "#e35205|Orange", "表示"],
+  ["ThreadColor", "K", 0, "#f7e200|Yellow", "表示"],
+  ["ThreadColor", "L", 0, "#823b34|Brown", "表示"]
+];
 
 const DELIVERY_HEADERS = [
   "タイムスタンプ", "選択ID", "郵便番号", "住所", "建物名・部屋番号", "名前",
@@ -62,6 +80,57 @@ const DEFAULT_REMOTE_PREFIXES =
 
 function onOpen() {
   setupSpreadsheet();
+}
+
+/**
+ * マスタ編集時:
+ * - ThreadColor の備考(#hex|Name) → 同じ行の F列（色見本）に背景色
+ * - F25 のカラーコード → F24 の背景色
+ * - 対象アイテムは「表示 / 非表示」プルダウン
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+  const sheet = e.range.getSheet();
+  if (sheet.getName() !== MASTER_DATA_SHEET_NAME) return;
+
+  const row = e.range.getRow();
+  const col = e.range.getColumn();
+  if (row < 2) return;
+
+  const editedValue = e.range.getValue();
+
+  // F25 のカラーコード → F24 背景
+  if (col === 6 && row === 25) {
+    applyBackgroundFromColorCode(sheet.getRange(24, 6), editedValue);
+    return;
+  }
+
+  // ThreadColor: 備考(D列)編集 → 色見本(F列)
+  if (col === 4) {
+    const category = String(sheet.getRange(row, 1).getValue() || "");
+    if (category === "ThreadColor") {
+      applyBackgroundFromColorCode(sheet.getRange(row, 6), editedValue);
+    }
+  }
+}
+
+/**
+ * 備考やセル値から #RGB / #RRGGBB を抜き出して背景色を適用。
+ */
+function extractHexColor(raw) {
+  const m = String(raw == null ? "" : raw).match(/#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})\b/);
+  return m ? "#" + m[1] : "";
+}
+
+function applyBackgroundFromColorCode(cell, raw) {
+  const hex = extractHexColor(raw);
+  if (hex) {
+    cell.setBackground(hex);
+    return;
+  }
+  if (String(raw == null ? "" : raw).trim() === "") {
+    cell.setBackground(null);
+  }
 }
 
 /**
@@ -120,13 +189,16 @@ function setupSpreadsheet() {
       ["ItemSize", "110", 0, "", "キッズT"],
       ["ItemSize", "130", 0, "", "キッズT"],
       ["ItemSize", "F", 0, "", "ポーチ, トートバック, 持ち込み"],
-      ["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS]
+      ["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS],
+
+      ["GpsConfig", "緯度経度", 0, DEFAULT_GPS_LOCATION, ""]
     ];
-    
-    initialData.forEach(row => masterSheet.appendRow(row));
+
+    initialData.concat(DEFAULT_THREAD_COLORS).forEach(row => masterSheet.appendRow(row));
   }
 
   migrateMasterData(masterSheet);
+  setupMasterThreadUi(masterSheet);
 
   // 送料マスタ（未登録なら追加）
   const masterValues = masterSheet.getDataRange().getValues();
@@ -163,6 +235,8 @@ function setupSpreadsheet() {
       "{{orderId}} ご注文ID",
       "{{plan}} プラン",
       "{{option}} オプション",
+      "{{gpsDatetime}} GPS日時",
+      "{{gpsLocation}} GPS緯度経度",
       "{{soundCard}} 音が聴けるカード",
       "{{item}} アイテム",
       "{{itemColor}} アイテムカラー",
@@ -182,7 +256,7 @@ function setupSpreadsheet() {
     mailSheet.getRange("B5").setWrap(true);
     mailSheet.getRange("B7").setWrap(true);
   } else {
-    ensureMailSoundCardTag(mailSheet);
+    ensureMailTemplateTags(mailSheet);
   }
 }
 
@@ -192,6 +266,8 @@ function setupSpreadsheet() {
 function migrateMasterData(masterSheet) {
   const values = masterSheet.getDataRange().getValues();
   let hasOtherSize = false;
+  let hasGpsLocation = false;
+  const threadIds = {};
 
   for (let i = 1; i < values.length; i++) {
     const category = values[i][0];
@@ -205,17 +281,77 @@ function migrateMasterData(masterSheet) {
     if (category === "ItemSize" && name === "その他") {
       hasOtherSize = true;
     }
+    if (category === "GpsConfig" && name === "緯度経度") {
+      hasGpsLocation = true;
+    }
+    if (category === "ThreadColor") {
+      threadIds[String(name)] = true;
+    }
   }
 
   if (!hasOtherSize) {
     masterSheet.appendRow(["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS]);
   }
+  if (!hasGpsLocation) {
+    masterSheet.appendRow(["GpsConfig", "緯度経度", 0, DEFAULT_GPS_LOCATION, ""]);
+  }
+  DEFAULT_THREAD_COLORS.forEach(function (row) {
+    if (!threadIds[row[1]]) {
+      masterSheet.appendRow(row);
+    }
+  });
 }
 
 /**
- * 既存メール文面に {{soundCard}} が無ければ挿入する。
+ * ThreadColor 行の「表示/非表示」プルダウンと色見本(F列)を整える。
+ * 手動実行: setupMasterThreadUi(SpreadsheetApp.getActiveSpreadsheet().getSheetByName("マスタデータ"))
  */
-function ensureMailSoundCardTag(mailSheet) {
+function setupMasterThreadUi(masterSheet) {
+  if (!masterSheet) {
+    masterSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_DATA_SHEET_NAME);
+  }
+  if (!masterSheet) return;
+
+  if (String(masterSheet.getRange(1, 6).getValue() || "") !== "色見本") {
+    masterSheet.getRange(1, 6).setValue("色見本");
+  }
+  masterSheet.setColumnWidth(6, 56);
+
+  const visibilityRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(["表示", "非表示"], true)
+    .setAllowInvalid(false)
+    .setHelpText("表示=注文画面に出す / 非表示=出さない")
+    .build();
+
+  const values = masterSheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] !== "ThreadColor") continue;
+    const row = i + 1;
+    const flagCell = masterSheet.getRange(row, 5);
+    flagCell.setDataValidation(visibilityRule);
+
+    const flag = String(values[i][4] || "").trim();
+    if (flag !== "表示" && flag !== "非表示") {
+      // 空欄は従来どおり非表示扱い → 明示的に「非表示」へ
+      flagCell.setValue("非表示");
+    }
+
+    const swatch = masterSheet.getRange(row, 6);
+    swatch.setValue("");
+    applyBackgroundFromColorCode(swatch, values[i][3]);
+  }
+
+  // F25 にカラーコード文字列があるときだけ F24 へ初期同期（空の色見本で消さない）
+  const f25Value = masterSheet.getRange(25, 6).getValue();
+  if (extractHexColor(f25Value)) {
+    applyBackgroundFromColorCode(masterSheet.getRange(24, 6), f25Value);
+  }
+}
+
+/**
+ * 既存メール文面に不足タグを挿入する。
+ */
+function ensureMailTemplateTags(mailSheet) {
   const data = mailSheet.getDataRange().getValues();
   for (let i = 0; i < data.length; i++) {
     const key = String(data[i][0]).trim();
@@ -230,15 +366,28 @@ function ensureMailSoundCardTag(mailSheet) {
         } else {
           body = body + "\n音が聴けるカード: {{soundCard}}";
         }
-        mailSheet.getRange(i + 1, 2).setValue(body);
       }
+      if (body.indexOf("{{gpsDatetime}}") === -1) {
+        if (body.indexOf("オプション: {{option}}") !== -1) {
+          body = body.replace(
+            "オプション: {{option}}",
+            "オプション: {{option}}\nGPS日時: {{gpsDatetime}}\nGPS緯度経度: {{gpsLocation}}"
+          );
+        } else {
+          body = body + "\nGPS日時: {{gpsDatetime}}\nGPS緯度経度: {{gpsLocation}}";
+        }
+      }
+      mailSheet.getRange(i + 1, 2).setValue(body);
     }
     if (key === "差し込みタグ") {
       let tags = String(data[i][1] || "");
       if (tags.indexOf("{{soundCard}}") === -1) {
         tags = tags + "\n{{soundCard}} 音が聴けるカード";
-        mailSheet.getRange(i + 1, 2).setValue(tags);
       }
+      if (tags.indexOf("{{gpsDatetime}}") === -1) {
+        tags = tags + "\n{{gpsDatetime}} GPS日時\n{{gpsLocation}} GPS緯度経度";
+      }
+      mailSheet.getRange(i + 1, 2).setValue(tags);
     }
   }
 }
@@ -383,7 +532,9 @@ function doGet(e) {
     items: [],
     colors: [],
     sizes: [],
-    shipping: []
+    shipping: [],
+    threads: [],
+    gpsConfig: []
   };
   
   masterData.slice(1).forEach(row => {
@@ -392,12 +543,14 @@ function doGet(e) {
       name: row[1], 
       price: row[2], 
       note: row[3],
-      associatedItems: row[4] ? String(row[4]).split(",").map(i => i.trim()) : []
+      associatedItems: row[4] ? String(row[4]).split(",").map(i => i.trim()).filter(Boolean) : []
     };
     if (category === "Item") master.items.push(item);
     if (category === "ItemColor") master.colors.push(item);
     if (category === "ItemSize") master.sizes.push(item);
     if (category === "Shipping") master.shipping.push(item);
+    if (category === "ThreadColor") master.threads.push(item);
+    if (category === "GpsConfig") master.gpsConfig.push(item);
   });
   
   // Delivery records keyed by order ID (latest wins)
@@ -452,6 +605,8 @@ function doGet(e) {
       deliveryMethod: cell(row, "受取方法", row[13] || "当日渡し"),
       shippingFee: cell(row, "送料", row[14] || 0),
       soundCardQty: Number(cell(row, "音が聴けるカード", 0) || 0),
+      gpsDatetime: cell(row, "GPS日時", ""),
+      gpsLocation: cell(row, "GPS緯度経度", ""),
       delivery: deliveryMap[selectedId] || null
     };
   });
@@ -510,7 +665,9 @@ function doPost(e) {
       "ステータス": "新規",
       "受取方法": deliveryMethod,
       "送料": shippingFee,
-      "音が聴けるカード": soundCardQty
+      "音が聴けるカード": soundCardQty,
+      "GPS日時": data.option === "GPS日時" ? (data.gpsDatetime || "") : "",
+      "GPS緯度経度": data.option === "GPS日時" ? (data.gpsLocation || "") : ""
     };
 
     const row = header.map(function (name) {
@@ -659,11 +816,14 @@ function sendDeliveryConfirmationMail(ss, data, shippingFee) {
     
     const template = getMailTemplate(ss);
     const soundCardQty = Number(data.soundCardQty || 0);
+    const isGps = data.option === "GPS日時";
     const vars = {
       name: data.shipName || "",
       orderId: data.selectedId || "",
       plan: data.plan || "",
       option: data.option || "なし",
+      gpsDatetime: isGps ? (data.gpsDatetime || "") : "なし",
+      gpsLocation: isGps ? (data.gpsLocation || "") : "なし",
       soundCard: soundCardQty > 0 ? soundCardQty + "枚" : "なし",
       item: data.item || "",
       itemColor: data.itemColor || "",

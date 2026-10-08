@@ -6,15 +6,25 @@ import {
     formatSoundCardLabel,
     SOUND_CARD_UNIT_PRICE,
 } from "@/hooks/useOrderForm";
-import { THREAD_COLORS } from "@/constants/colors";
+import { resolveThreadColor } from "@/constants/colors";
 import { normalizeZip } from "@/utils/shipping";
+import { GPS_OPTION_PRICE } from "@/utils/gps";
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="summary-row">
+            <span className="summary-label">{label}</span>
+            <span className="summary-value">{value}</span>
+        </div>
+    );
+}
 
 export default function Step4_Preview({
     order
 }: {
     order: OrderState;
 }) {
-    const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
+    const getThreadColor = (id: string) => resolveThreadColor(id);
     const isShipping = order.deliveryMethod === "shipping";
     const itemsSubtotal = order.totalPrice - order.shippingFee;
     const displayColor = order.itemColor
@@ -26,18 +36,14 @@ export default function Step4_Preview({
     const soundCardValue = order.soundCardQty > 0
         ? `${formatSoundCardLabel(order.soundCardQty)}（¥${(order.soundCardQty * SOUND_CARD_UNIT_PRICE).toLocaleString()}）`
         : "なし";
+    const optionValue = order.option === "GPS日時"
+        ? `GPS日時（+¥${GPS_OPTION_PRICE.toLocaleString()}）`
+        : (order.option || "-");
 
     const formatZip = (zip: string) => {
         const digits = normalizeZip(zip);
         return digits.length === 7 ? `〒${digits.slice(0, 3)}-${digits.slice(3)}` : zip;
     };
-
-    const SummaryRow = ({ label, value }: { label: string; value: string }) => (
-        <div className="summary-row">
-            <span className="summary-label">{label}</span>
-            <span className="summary-value">{value}</span>
-        </div>
-    );
 
     return (
         <div className="animate-fade-in pb-10">
@@ -47,7 +53,6 @@ export default function Step4_Preview({
             </header>
 
             <div className="grid gap-8 preview-grid-pc">
-                {/* Order Details List */}
                 <div className="thread-card shadow-sm review-left">
                     <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-4 border-b border-border pb-3 uppercase">
                         Order Details
@@ -55,7 +60,13 @@ export default function Step4_Preview({
                     <div className="summary-list">
                         <SummaryRow label="ID" value={order.selectedId} />
                         <SummaryRow label="PLAN" value={order.plan || "-"} />
-                        <SummaryRow label="OPTION" value={order.option || "-"} />
+                        <SummaryRow label="OPTION" value={optionValue} />
+                        {order.option === "GPS日時" && (
+                            <>
+                                <SummaryRow label="GPS TIME" value={order.gpsDatetime || "-"} />
+                                <SummaryRow label="GPS LOC" value={order.gpsLocation || "-"} />
+                            </>
+                        )}
                         <SummaryRow label="ITEM" value={order.item || "-"} />
                         <SummaryRow label="COLOR" value={displayColor} />
                         <SummaryRow label="SIZE" value={displaySize} />
@@ -78,7 +89,6 @@ export default function Step4_Preview({
                     )}
                 </div>
 
-                {/* Thread Selection with Chips */}
                 <div className="thread-card shadow-sm review-right-top">
                     <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-6 border-b border-border pb-3 uppercase">
                         Thread Selection
@@ -100,7 +110,6 @@ export default function Step4_Preview({
                     </div>
                 </div>
 
-                {/* Remarks and Total Section */}
                 <div className="thread-card shadow-sm review-right-bottom">
                     {order.notes && (
                         <div className="mb-6 px-1">

@@ -3,15 +3,21 @@
 import {
     Plan,
     PlanOption,
-    MasterDataItem,
+    MasterData,
     OrderState,
-    isStdPlan,
     isBringInItem,
     OTHER_OPTION,
     SOUND_CARD_UNIT_PRICE,
     SOUND_CARD_MAX_QTY,
 } from "@/hooks/useOrderForm";
 import ThreadSelector from "./ThreadSelector";
+import { getVisibleThreadColors } from "@/constants/colors";
+import {
+    GPS_OPTION_PRICE,
+    GPS_TEXT_MAX,
+    formatGpsDatetimeFromId,
+    sanitizeGpsText,
+} from "@/utils/gps";
 import { useEffect, useRef } from "react";
 
 export default function Step2_DetailsSelection({
@@ -20,7 +26,7 @@ export default function Step2_DetailsSelection({
     onUpdate
 }: {
     order: OrderState;
-    masterData: { items: MasterDataItem[]; colors: MasterDataItem[]; sizes: MasterDataItem[] };
+    masterData: MasterData;
     onUpdate: (updates: Partial<OrderState>) => void;
 }) {
     const plansRef = useRef<HTMLElement>(null);
@@ -36,6 +42,8 @@ export default function Step2_DetailsSelection({
     const colorReady = bringIn || !!order.itemColor;
     const colorOtherReady = order.itemColor !== OTHER_OPTION || !!order.itemColorOther.trim();
     const sizeOtherReady = order.itemSize !== OTHER_OPTION || !!order.itemSizeOther.trim();
+    const visibleThreads = getVisibleThreadColors(masterData.threads);
+    const gpsSelected = order.option === "GPS日時";
 
     const scrollTo = (ref: React.RefObject<HTMLElement | null>) => {
         setTimeout(() => {
@@ -43,9 +51,8 @@ export default function Step2_DetailsSelection({
         }, 100);
     };
 
-    // Auto-scroll logic
     useEffect(() => {
-        if (order.plan && isStdPlan(order.plan) && !order.option) scrollTo(optionRef);
+        if (order.plan && !order.option) scrollTo(optionRef);
         else if (order.plan && order.option && !order.item) scrollTo(itemsRef);
     }, [order.plan, order.option, order.item]);
 
@@ -71,11 +78,10 @@ export default function Step2_DetailsSelection({
     ];
 
     const options: { id: PlanOption; label: string; price: string }[] = [
-        { id: "GPS日時", label: "GPS日時", price: "+¥0" },
+        { id: "GPS日時", label: "GPS日時", price: `+¥${GPS_OPTION_PRICE.toLocaleString()}` },
         { id: "なし", label: "なし", price: "+¥0" },
     ];
 
-    // Filter logic
     const filteredColors = masterData.colors.filter(c =>
         c.associatedItems.length === 0 || (order.item && c.associatedItems.includes(order.item))
     );
@@ -83,7 +89,6 @@ export default function Step2_DetailsSelection({
         s.associatedItems.length === 0 || (order.item && s.associatedItems.includes(order.item))
     );
 
-    // Auto-fill logic
     useEffect(() => {
         const updates: Partial<OrderState> = {};
         if (masterData.items.length === 1 && !order.item) {
@@ -113,6 +118,22 @@ export default function Step2_DetailsSelection({
         }
     }, [masterData, order.item, order.itemColor, order.itemSize, onUpdate]);
 
+    const applyGpsOption = (option: PlanOption) => {
+        if (option === "GPS日時") {
+            onUpdate({
+                option,
+                gpsDatetime: order.gpsDatetime || formatGpsDatetimeFromId(order.selectedId),
+                gpsLocation: order.gpsLocation || masterData.gpsLocationDefault,
+            });
+            return;
+        }
+        onUpdate({
+            option,
+            gpsDatetime: "",
+            gpsLocation: "",
+        });
+    };
+
     const handleThreadToggle = (id: string, index?: number) => {
         const count = order.plan === "Lite" ? 1 : 3;
         const newThreads = [...order.threads];
@@ -126,11 +147,9 @@ export default function Step2_DetailsSelection({
     };
 
     const threadCount = order.plan === "Lite" ? 1 : 3;
-    const stdSelected = isStdPlan(order.plan);
     const threadsReady =
         order.threads.length === threadCount && order.threads.every(t => t !== "");
 
-    // Determine which section should be highlighted to guide the user
     let activeSection = 0;
     if (!order.plan) activeSection = 1;
     else if (!order.option) activeSection = 2;
@@ -147,7 +166,7 @@ export default function Step2_DetailsSelection({
                 <p className="text-sub">デザインと詳細を選択してください</p>
             </header>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? 'focused-section' : ''}`} ref={plansRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? "focused-section" : ""}`} ref={plansRef}>
                 <h3 className="section-title">02-1. SELECT PLAN</h3>
                 <div className="grid grid-2">
                     {plans.map((p) => (
@@ -156,13 +175,14 @@ export default function Step2_DetailsSelection({
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
                             onClick={() => {
                                 const limit = p.id === "Lite" ? 1 : 3;
-                                let newThreads = order.threads.slice(0, limit);
+                                const newThreads = order.threads.slice(0, limit);
                                 while (newThreads.length < limit) newThreads.push("");
-                                const nextIsStd = p.id === "Std Wave" || p.id === "Std Circle";
                                 onUpdate({
                                     plan: p.id,
                                     threads: newThreads,
-                                    option: nextIsStd ? "" : "なし",
+                                    option: "",
+                                    gpsDatetime: "",
+                                    gpsLocation: "",
                                 });
                             }}
                         >
@@ -173,34 +193,56 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? 'focused-section' : ''}`} ref={optionRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? "focused-section" : ""}`} ref={optionRef}>
                 <h3 className="section-title">02-2. OPTION</h3>
                 <div className="grid grid-2">
                     {!order.plan ? (
                         <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
                             <span className="text-[10px] italic">Select plan first</span>
                         </div>
-                    ) : options.map((o) => {
-                        const locked = !stdSelected;
-                        return (
-                            <div
-                                key={o.id}
-                                className={`tile ${order.option === o.id ? "active" : ""} ${locked ? "opacity-50 cursor-not-allowed" : ""}`}
-                                onClick={() => {
-                                    if (locked) return;
-                                    onUpdate({ option: o.id });
-                                }}
-                            >
-                                <span className="text-sm font-bold">{o.label}</span>
-                                <span className="text-[10px] mt-1 opacity-60">{o.price}</span>
-                                {locked && o.id === "なし" && <span className="badge">Auto-Selected</span>}
-                            </div>
-                        );
-                    })}
+                    ) : options.map((o) => (
+                        <div
+                            key={o.id}
+                            className={`tile ${order.option === o.id ? "active" : ""}`}
+                            onClick={() => applyGpsOption(o.id)}
+                        >
+                            <span className="text-sm font-bold">{o.label}</span>
+                            <span className="text-[10px] mt-1 opacity-60">{o.price}</span>
+                        </div>
+                    ))}
                 </div>
+                {gpsSelected && (
+                    <div className="gps-fields mt-4">
+                        <label className="gps-field">
+                            <span className="gps-field-label">日時（最大{GPS_TEXT_MAX}文字）</span>
+                            <input
+                                className="other-input"
+                                type="text"
+                                inputMode="text"
+                                maxLength={GPS_TEXT_MAX}
+                                placeholder="2026.03.19_00.56.08"
+                                value={order.gpsDatetime}
+                                onChange={(e) => onUpdate({ gpsDatetime: sanitizeGpsText(e.target.value) })}
+                            />
+                        </label>
+                        <label className="gps-field">
+                            <span className="gps-field-label">緯度経度（最大{GPS_TEXT_MAX}文字）</span>
+                            <input
+                                className="other-input"
+                                type="text"
+                                inputMode="text"
+                                maxLength={GPS_TEXT_MAX}
+                                placeholder="34.814733,135.378753"
+                                value={order.gpsLocation}
+                                onChange={(e) => onUpdate({ gpsLocation: sanitizeGpsText(e.target.value) })}
+                            />
+                        </label>
+                        <p className="gps-hint">使用可能: 英数字 . , - _</p>
+                    </div>
+                )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? 'focused-section' : ''}`} ref={itemsRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? "focused-section" : ""}`} ref={itemsRef}>
                 <h3 className="section-title">02-3. SELECT ITEM</h3>
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
@@ -226,7 +268,7 @@ export default function Step2_DetailsSelection({
             </section>
 
             {!bringIn && (
-                <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={colorRef}>
+                <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? "focused-section" : ""}`} ref={colorRef}>
                     <h3 className="section-title">02-4. COLOR</h3>
                     <div className="grid grid-2">
                         {!order.item ? (
@@ -265,7 +307,7 @@ export default function Step2_DetailsSelection({
                 </section>
             )}
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={sizeRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? "focused-section" : ""}`} ref={sizeRef}>
                 <h3 className="section-title">{bringIn ? "02-4. SIZE" : "02-5. SIZE"}</h3>
                 <div className="grid grid-2">
                     {!order.item ? (
@@ -303,12 +345,13 @@ export default function Step2_DetailsSelection({
                 )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 6 ? 'focused-section' : ''}`} ref={threadsRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 6 ? "focused-section" : ""}`} ref={threadsRef}>
                 <h3 className="section-title">{bringIn ? "02-5. THREAD COLORS" : "02-6. THREAD COLORS"}</h3>
                 {order.plan ? (
                     <ThreadSelector
                         limit={threadCount}
                         selected={order.threads}
+                        colors={visibleThreads}
                         onToggle={handleThreadToggle}
                     />
                 ) : (
@@ -318,7 +361,7 @@ export default function Step2_DetailsSelection({
                 )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 7 ? 'focused-section' : ''}`} ref={soundCardRef}>
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 7 ? "focused-section" : ""}`} ref={soundCardRef}>
                 <h3 className="section-title">{bringIn ? "02-6. SOUND CARD (OPTIONAL)" : "02-7. SOUND CARD (OPTIONAL)"}</h3>
                 <div className="sound-card-row">
                     <div className="sound-card-info">

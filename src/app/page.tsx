@@ -8,6 +8,7 @@ import {
   isBringInItem,
   formatOtherValue,
 } from "@/hooks/useOrderForm";
+import { isValidGpsText } from "@/utils/gps";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
 import Step3_Delivery from "@/components/Step3_Delivery";
@@ -112,9 +113,15 @@ function OrderPageInner() {
   const sizeOk =
     !!order.itemSize &&
     (order.itemSize !== OTHER_OPTION || !!order.itemSizeOther.trim());
+  const gpsOk =
+    order.option === "なし" ||
+    (order.option === "GPS日時" &&
+      isValidGpsText(order.gpsDatetime) &&
+      isValidGpsText(order.gpsLocation));
   const isStep2Valid =
     order.plan &&
     order.option &&
+    gpsOk &&
     order.item &&
     colorOk &&
     sizeOk &&

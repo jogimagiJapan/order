@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { THREAD_COLORS } from "@/constants/colors";
+import { resolveThreadColor } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { parseDisplayId } from "@/utils/id";
 
@@ -34,6 +34,8 @@ interface Submission {
     deliveryMethod: string;
     shippingFee: number;
     soundCardQty: number;
+    gpsDatetime: string;
+    gpsLocation: string;
     delivery?: DeliveryInfo | null;
 }
 
@@ -97,7 +99,7 @@ export default function AdminDashboard() {
         );
     }
 
-    const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
+    const getThreadColor = (id: string) => resolveThreadColor(id);
     const isCompleted = completedIds[current.selectedId] || false;
     const formattedTimestamp = new Date(current.timestamp).toLocaleString('ja-JP', {
         year: 'numeric',
@@ -162,6 +164,18 @@ export default function AdminDashboard() {
                                     <p className="label-small">Option</p>
                                 </div>
                             </div>
+                            {(current.option === "GPS日時" || current.gpsDatetime || current.gpsLocation) && (
+                                <div className="admin-grid-2">
+                                    <div className="admin-grid-val">
+                                        <p className="value">{current.gpsDatetime || "-"}</p>
+                                        <p className="label-small">GPS Time</p>
+                                    </div>
+                                    <div className="admin-grid-val">
+                                        <p className="value">{current.gpsLocation || "-"}</p>
+                                        <p className="label-small">GPS Location</p>
+                                    </div>
+                                </div>
+                            )}
                             <div className="admin-grid-2">
                                 <div className="admin-grid-val">
                                     <p className="value">{current.item}</p>
