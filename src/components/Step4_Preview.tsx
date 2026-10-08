@@ -1,6 +1,11 @@
 "use client";
 
-import { OrderState } from "@/hooks/useOrderForm";
+import {
+    OrderState,
+    formatOtherValue,
+    formatSoundCardLabel,
+    SOUND_CARD_UNIT_PRICE,
+} from "@/hooks/useOrderForm";
 import { THREAD_COLORS } from "@/constants/colors";
 import { normalizeZip } from "@/utils/shipping";
 
@@ -12,6 +17,15 @@ export default function Step4_Preview({
     const getThreadColor = (id: string) => THREAD_COLORS.find(c => c.id === id);
     const isShipping = order.deliveryMethod === "shipping";
     const itemsSubtotal = order.totalPrice - order.shippingFee;
+    const displayColor = order.itemColor
+        ? formatOtherValue(order.itemColor, order.itemColorOther)
+        : "-";
+    const displaySize = order.itemSize
+        ? formatOtherValue(order.itemSize, order.itemSizeOther)
+        : "-";
+    const soundCardValue = order.soundCardQty > 0
+        ? `${formatSoundCardLabel(order.soundCardQty)}（¥${(order.soundCardQty * SOUND_CARD_UNIT_PRICE).toLocaleString()}）`
+        : "なし";
 
     const formatZip = (zip: string) => {
         const digits = normalizeZip(zip);
@@ -43,8 +57,9 @@ export default function Step4_Preview({
                         <SummaryRow label="PLAN" value={order.plan || "-"} />
                         <SummaryRow label="OPTION" value={order.option || "-"} />
                         <SummaryRow label="ITEM" value={order.item || "-"} />
-                        <SummaryRow label="COLOR" value={order.itemColor || "-"} />
-                        <SummaryRow label="SIZE" value={order.itemSize || "-"} />
+                        <SummaryRow label="COLOR" value={displayColor} />
+                        <SummaryRow label="SIZE" value={displaySize} />
+                        <SummaryRow label="SOUND CARD" value={soundCardValue} />
                         <SummaryRow label="RECEIVE" value={isShipping ? "後日配送" : "本日お渡し"} />
                     </div>
 

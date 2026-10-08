@@ -33,6 +33,7 @@ interface Submission {
     status: string;
     deliveryMethod: string;
     shippingFee: number;
+    soundCardQty: number;
     delivery?: DeliveryInfo | null;
 }
 
@@ -167,14 +168,20 @@ export default function AdminDashboard() {
                                     <p className="label-small">Item</p>
                                 </div>
                                 <div className="admin-grid-val">
-                                    <p className="value">{current.itemColor}</p>
+                                    <p className="value">{current.itemColor || "-"}</p>
                                     <p className="label-small">Color</p>
                                 </div>
                             </div>
                             <div className="admin-grid-2">
                                 <div className="admin-grid-val">
-                                    <p className="value">{current.itemSize}</p>
+                                    <p className="value">{current.itemSize || "-"}</p>
                                     <p className="label-small">Size</p>
+                                </div>
+                                <div className="admin-grid-val">
+                                    <p className="value">
+                                        {(current.soundCardQty || 0) > 0 ? `${current.soundCardQty}枚` : "なし"}
+                                    </p>
+                                    <p className="label-small">Sound Card</p>
                                 </div>
                             </div>
                         </div>

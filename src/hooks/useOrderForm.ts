@@ -8,8 +8,26 @@ export type Plan = "Lite" | "Limited" | "Std Wave" | "Std Circle";
 export type PlanOption = "GPS日時" | "なし";
 export type DeliveryMethod = "pickup" | "shipping";
 
+export const OTHER_OPTION = "その他";
+export const SOUND_CARD_UNIT_PRICE = 500;
+export const SOUND_CARD_MAX_QTY = 10;
+
 export const isStdPlan = (plan: Plan | null): boolean =>
     plan === "Std Wave" || plan === "Std Circle";
+
+export const isBringInItem = (item: string): boolean => item === "持ち込み";
+
+export function formatOtherValue(selected: string, other: string): string {
+    if (selected === OTHER_OPTION) {
+        const trimmed = other.trim();
+        return trimmed ? `${OTHER_OPTION}（${trimmed}）` : OTHER_OPTION;
+    }
+    return selected;
+}
+
+export function formatSoundCardLabel(qty: number): string {
+    return qty > 0 ? `${qty}枚` : "なし";
+}
 
 export interface MasterDataItem {
     name: string;
@@ -34,8 +52,11 @@ export interface OrderState {
     option: PlanOption | "";
     item: string;
     itemColor: string;
+    itemColorOther: string;
     itemSize: string;
+    itemSizeOther: string;
     threads: string[]; // Changed from thread1,2,3 to an array
+    soundCardQty: number;
     notes: string;
     deliveryMethod: DeliveryMethod | "";
     shipping: ShippingInfo;
@@ -52,6 +73,19 @@ const EMPTY_SHIPPING: ShippingInfo = {
     email: "",
     isRemoteManual: false,
 };
+
+function calcOrderTotal(
+    order: OrderState,
+    items: MasterDataItem[],
+): number {
+    let total = 0;
+    if (order.plan === "Lite" || order.plan === "Limited") total = 2000;
+    else if (isStdPlan(order.plan)) total = 4000;
+
+    const itemPrice = items.find(i => i.name === order.item)?.price || 0;
+    const cardPrice = (order.soundCardQty || 0) * SOUND_CARD_UNIT_PRICE;
+    return total + itemPrice + cardPrice + order.shippingFee;
+}
 
 export function useOrderForm() {
     const [step, setStep] = useState(1);
@@ -70,8 +104,11 @@ export function useOrderForm() {
         option: "",
         item: "",
         itemColor: "",
+        itemColorOther: "",
         itemSize: "",
+        itemSizeOther: "",
         threads: [],
+        soundCardQty: 0,
         notes: "",
         deliveryMethod: "",
         shipping: { ...EMPTY_SHIPPING },
@@ -98,18 +135,12 @@ export function useOrderForm() {
     const updateOrder = (updates: Partial<OrderState>) => {
         setOrder((prev) => {
             const next = { ...prev, ...updates };
-            // Calculation logic
-            let total = 0;
-            if (next.plan === "Lite" || next.plan === "Limited") total = 2000;
-            else if (isStdPlan(next.plan)) total = 4000;
-
-            const itemPrice = masterData.items.find(i => i.name === next.item)?.price || 0;
 
             next.shippingFee = next.deliveryMethod === "shipping"
                 ? resolveShippingFee(next.shipping.zip, next.shipping.isRemoteManual, masterData.shipping)
                 : 0;
 
-            next.totalPrice = total + itemPrice + next.shippingFee;
+            next.totalPrice = calcOrderTotal(next, masterData.items);
 
             return next;
         });
@@ -124,11 +155,7 @@ export function useOrderForm() {
                 ? resolveShippingFee(shipping.zip, shipping.isRemoteManual, masterData.shipping)
                 : 0;
 
-            let total = 0;
-            if (next.plan === "Lite" || next.plan === "Limited") total = 2000;
-            else if (isStdPlan(next.plan)) total = 4000;
-            const itemPrice = masterData.items.find(i => i.name === next.item)?.price || 0;
-            next.totalPrice = total + itemPrice + next.shippingFee;
+            next.totalPrice = calcOrderTotal(next, masterData.items);
 
             return next;
         });

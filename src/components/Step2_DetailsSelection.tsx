@@ -1,6 +1,16 @@
 "use client";
 
-import { Plan, PlanOption, MasterDataItem, OrderState, isStdPlan } from "@/hooks/useOrderForm";
+import {
+    Plan,
+    PlanOption,
+    MasterDataItem,
+    OrderState,
+    isStdPlan,
+    isBringInItem,
+    OTHER_OPTION,
+    SOUND_CARD_UNIT_PRICE,
+    SOUND_CARD_MAX_QTY,
+} from "@/hooks/useOrderForm";
 import ThreadSelector from "./ThreadSelector";
 import { useEffect, useRef } from "react";
 
@@ -19,7 +29,13 @@ export default function Step2_DetailsSelection({
     const colorRef = useRef<HTMLElement>(null);
     const sizeRef = useRef<HTMLElement>(null);
     const threadsRef = useRef<HTMLElement>(null);
+    const soundCardRef = useRef<HTMLElement>(null);
     const remarksRef = useRef<HTMLElement>(null);
+
+    const bringIn = isBringInItem(order.item);
+    const colorReady = bringIn || !!order.itemColor;
+    const colorOtherReady = order.itemColor !== OTHER_OPTION || !!order.itemColorOther.trim();
+    const sizeOtherReady = order.itemSize !== OTHER_OPTION || !!order.itemSizeOther.trim();
 
     const scrollTo = (ref: React.RefObject<HTMLElement | null>) => {
         setTimeout(() => {
@@ -34,18 +50,18 @@ export default function Step2_DetailsSelection({
     }, [order.plan, order.option, order.item]);
 
     useEffect(() => {
-        if (order.item && !order.itemColor) scrollTo(colorRef);
-    }, [order.item, order.itemColor]);
+        if (order.item && !bringIn && !order.itemColor) scrollTo(colorRef);
+    }, [order.item, bringIn, order.itemColor]);
 
     useEffect(() => {
-        if (order.item && order.itemColor && !order.itemSize) scrollTo(sizeRef);
-    }, [order.item, order.itemColor, order.itemSize]);
+        if (order.item && colorReady && colorOtherReady && !order.itemSize) scrollTo(sizeRef);
+    }, [order.item, colorReady, colorOtherReady, order.itemSize]);
 
     useEffect(() => {
-        if (order.itemColor && order.itemSize && order.threads.every(t => !t)) scrollTo(threadsRef);
-    }, [order.itemColor, order.itemSize, order.threads]);
-
-    // Note: Not scrolling to remarks automatically as users might want to review threads
+        if (colorReady && colorOtherReady && order.itemSize && sizeOtherReady && order.threads.every(t => !t)) {
+            scrollTo(threadsRef);
+        }
+    }, [colorReady, colorOtherReady, order.itemSize, sizeOtherReady, order.threads]);
 
     const plans: { id: Plan; label: string; price: string }[] = [
         { id: "Lite", label: "Lite", price: "¥2,000" },
@@ -74,18 +90,19 @@ export default function Step2_DetailsSelection({
             updates.item = masterData.items[0].name;
         }
 
-        // If item is selected, check filtered colors/sizes
-        if (order.item) {
+        if (order.item && !isBringInItem(order.item)) {
             const currentItemColors = masterData.colors.filter(c =>
                 c.associatedItems.length === 0 || c.associatedItems.includes(order.item)
             );
-            const currentItemSizes = masterData.sizes.filter(s =>
-                s.associatedItems.length === 0 || s.associatedItems.includes(order.item)
-            );
-
             if (currentItemColors.length === 1 && !order.itemColor) {
                 updates.itemColor = currentItemColors[0].name;
             }
+        }
+
+        if (order.item) {
+            const currentItemSizes = masterData.sizes.filter(s =>
+                s.associatedItems.length === 0 || s.associatedItems.includes(order.item)
+            );
             if (currentItemSizes.length === 1 && !order.itemSize) {
                 updates.itemSize = currentItemSizes[0].name;
             }
@@ -100,7 +117,6 @@ export default function Step2_DetailsSelection({
         const count = order.plan === "Lite" ? 1 : 3;
         const newThreads = [...order.threads];
 
-        // Ensure array is of correct length
         while (newThreads.length < count) newThreads.push("");
 
         if (index !== undefined && index < count) {
@@ -111,15 +127,18 @@ export default function Step2_DetailsSelection({
 
     const threadCount = order.plan === "Lite" ? 1 : 3;
     const stdSelected = isStdPlan(order.plan);
+    const threadsReady =
+        order.threads.length === threadCount && order.threads.every(t => t !== "");
 
     // Determine which section should be highlighted to guide the user
     let activeSection = 0;
     if (!order.plan) activeSection = 1;
     else if (!order.option) activeSection = 2;
     else if (!order.item) activeSection = 3;
-    else if (!order.itemColor) activeSection = 4;
-    else if (!order.itemSize) activeSection = 5;
-    else if (order.threads.some(t => !t)) activeSection = 6;
+    else if (!bringIn && (!order.itemColor || !colorOtherReady)) activeSection = 4;
+    else if (!order.itemSize || !sizeOtherReady) activeSection = 5;
+    else if (!threadsReady) activeSection = 6;
+    else activeSection = 7;
 
     return (
         <div className="animate-fade-in pb-20 px-1">
@@ -136,7 +155,6 @@ export default function Step2_DetailsSelection({
                             key={p.id}
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
                             onClick={() => {
-                                // Reset threads if plan changes
                                 const limit = p.id === "Lite" ? 1 : 3;
                                 let newThreads = order.threads.slice(0, limit);
                                 while (newThreads.length < limit) newThreads.push("");
@@ -144,7 +162,6 @@ export default function Step2_DetailsSelection({
                                 onUpdate({
                                     plan: p.id,
                                     threads: newThreads,
-                                    // Std以外は「なし」を自動選択。Stdはユーザー選択を待つ
                                     option: nextIsStd ? "" : "なし",
                                 });
                             }}
@@ -194,7 +211,9 @@ export default function Step2_DetailsSelection({
                                 onUpdate({
                                     item: item.name,
                                     itemColor: "",
-                                    itemSize: ""
+                                    itemColorOther: "",
+                                    itemSize: "",
+                                    itemSizeOther: "",
                                 });
                             }}
                         >
@@ -206,34 +225,48 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={colorRef}>
-                <h3 className="section-title">02-4. COLOR</h3>
-                <div className="grid grid-2">
-                    {!order.item ? (
-                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                            <span className="text-[10px] italic">Select item first</span>
-                        </div>
-                    ) : filteredColors.length > 0 ? (
-                        filteredColors.map((c) => (
-                            <div
-                                key={c.name}
-                                className={`tile ${order.itemColor === c.name ? "active" : ""}`}
-                                onClick={() => onUpdate({ itemColor: c.name })}
-                            >
-                                <span className="text-sm font-bold">{c.name}</span>
-                                {filteredColors.length === 1 && <span className="badge">Auto-Selected</span>}
+            {!bringIn && (
+                <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? 'focused-section' : ''}`} ref={colorRef}>
+                    <h3 className="section-title">02-4. COLOR</h3>
+                    <div className="grid grid-2">
+                        {!order.item ? (
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                                <span className="text-[10px] italic">Select item first</span>
                             </div>
-                        ))
-                    ) : (
-                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                            <span className="text-[10px] italic">No colors</span>
-                        </div>
+                        ) : filteredColors.length > 0 ? (
+                            filteredColors.map((c) => (
+                                <div
+                                    key={c.name}
+                                    className={`tile ${order.itemColor === c.name ? "active" : ""}`}
+                                    onClick={() => onUpdate({
+                                        itemColor: c.name,
+                                        itemColorOther: c.name === OTHER_OPTION ? order.itemColorOther : "",
+                                    })}
+                                >
+                                    <span className="text-sm font-bold">{c.name}</span>
+                                    {filteredColors.length === 1 && <span className="badge">Auto-Selected</span>}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
+                                <span className="text-[10px] italic">No colors</span>
+                            </div>
+                        )}
+                    </div>
+                    {order.itemColor === OTHER_OPTION && (
+                        <input
+                            className="other-input mt-4"
+                            type="text"
+                            placeholder="カラーを入力してください"
+                            value={order.itemColorOther}
+                            onChange={(e) => onUpdate({ itemColorOther: e.target.value })}
+                        />
                     )}
-                </div>
-            </section>
+                </section>
+            )}
 
             <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? 'focused-section' : ''}`} ref={sizeRef}>
-                <h3 className="section-title">02-5. SIZE</h3>
+                <h3 className="section-title">{bringIn ? "02-4. SIZE" : "02-5. SIZE"}</h3>
                 <div className="grid grid-2">
                     {!order.item ? (
                         <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
@@ -244,7 +277,10 @@ export default function Step2_DetailsSelection({
                             <div
                                 key={s.name}
                                 className={`tile ${order.itemSize === s.name ? "active" : ""}`}
-                                onClick={() => onUpdate({ itemSize: s.name })}
+                                onClick={() => onUpdate({
+                                    itemSize: s.name,
+                                    itemSizeOther: s.name === OTHER_OPTION ? order.itemSizeOther : "",
+                                })}
                             >
                                 <span className="text-sm font-bold">{s.name}</span>
                                 {filteredSizes.length === 1 && <span className="badge">Auto-Selected</span>}
@@ -256,10 +292,19 @@ export default function Step2_DetailsSelection({
                         </div>
                     )}
                 </div>
+                {order.itemSize === OTHER_OPTION && (
+                    <input
+                        className="other-input mt-4"
+                        type="text"
+                        placeholder="サイズを入力してください"
+                        value={order.itemSizeOther}
+                        onChange={(e) => onUpdate({ itemSizeOther: e.target.value })}
+                    />
+                )}
             </section>
 
             <section className={`mb-16 transition-all duration-500 ${activeSection === 6 ? 'focused-section' : ''}`} ref={threadsRef}>
-                <h3 className="section-title">02-6. THREAD COLORS</h3>
+                <h3 className="section-title">{bringIn ? "02-5. THREAD COLORS" : "02-6. THREAD COLORS"}</h3>
                 {order.plan ? (
                     <ThreadSelector
                         limit={threadCount}
@@ -273,8 +318,41 @@ export default function Step2_DetailsSelection({
                 )}
             </section>
 
+            <section className={`mb-16 transition-all duration-500 ${activeSection === 7 ? 'focused-section' : ''}`} ref={soundCardRef}>
+                <h3 className="section-title">{bringIn ? "02-6. SOUND CARD (OPTIONAL)" : "02-7. SOUND CARD (OPTIONAL)"}</h3>
+                <div className="sound-card-row">
+                    <div className="sound-card-info">
+                        <span className="text-sm font-bold">音が聴けるカード</span>
+                        <span className="text-[10px] opacity-60">+¥{SOUND_CARD_UNIT_PRICE.toLocaleString()} / 枚</span>
+                    </div>
+                    <div className="qty-stepper">
+                        <button
+                            type="button"
+                            className="qty-btn"
+                            disabled={order.soundCardQty <= 0}
+                            onClick={() => onUpdate({ soundCardQty: Math.max(0, order.soundCardQty - 1) })}
+                            aria-label="減らす"
+                        >
+                            −
+                        </button>
+                        <span className="qty-value">{order.soundCardQty}</span>
+                        <button
+                            type="button"
+                            className="qty-btn"
+                            disabled={order.soundCardQty >= SOUND_CARD_MAX_QTY}
+                            onClick={() => onUpdate({
+                                soundCardQty: Math.min(SOUND_CARD_MAX_QTY, order.soundCardQty + 1),
+                            })}
+                            aria-label="増やす"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <section ref={remarksRef}>
-                <h3 className="section-title">02-7. REMARKS (OPTIONAL)</h3>
+                <h3 className="section-title">{bringIn ? "02-7. REMARKS (OPTIONAL)" : "02-8. REMARKS (OPTIONAL)"}</h3>
                 <textarea
                     className="w-full min-h-[120px] resize-none text-sm"
                     placeholder="ご要望や特記事項があればご記入ください"

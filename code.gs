@@ -1,7 +1,7 @@
 /**
  * Google Apps Script for "SEW THE SOUND"
  * Handles folder scanning, master data serving, order submission,
- * and specific file searching for the Sound Library.
+ * and Sound Library search (returns wav bytes as audioBase64).
  */
 
 const FOLDER_ID = "1NFTXy-gqHPxHIPvDl01yVBl_XQx2qLmW";
@@ -25,6 +25,7 @@ const DEFAULT_MAIL_BODY = [
   "ご注文ID: {{orderId}}",
   "プラン: {{plan}}",
   "オプション: {{option}}",
+  "音が聴けるカード: {{soundCard}}",
   "アイテム: {{item}} / {{itemColor}} / {{itemSize}}",
   "糸: {{threads}}",
   "",
@@ -44,8 +45,11 @@ const DEFAULT_MAIL_BODY = [
 const SUBMISSION_HEADERS = [
   "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー",
   "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス",
-  "受取方法", "送料"
+  "受取方法", "送料", "音が聴けるカード"
 ];
+
+const OTHER_COLOR_ITEMS = "Tシャツ, ロンT, キッズT, トートバック";
+const OTHER_SIZE_ITEMS = "Tシャツ, ロンT, キッズT";
 
 const DELIVERY_HEADERS = [
   "タイムスタンプ", "選択ID", "郵便番号", "住所", "建物名・部屋番号", "名前",
@@ -107,7 +111,7 @@ function setupSpreadsheet() {
       ["ItemColor", "ブラック", 0, "", "Tシャツ, キッズT"],
       ["ItemColor", "グレー", 0, "", "ロンT"],
       ["ItemColor", "ナチュラル", 0, "", "ポーチ, トートバック"],
-      ["ItemColor", "その他", 0, "", "Tシャツ, ロンT, キッズTポーチ, トートバック, 持ち込み"],
+      ["ItemColor", "その他", 0, "", OTHER_COLOR_ITEMS],
       
       ["ItemSize", "S", 0, "", "Tシャツ"],
       ["ItemSize", "M", 0, "", "Tシャツ, ロンT"],
@@ -115,11 +119,14 @@ function setupSpreadsheet() {
       ["ItemSize", "XL", 0, "", "Tシャツ"],
       ["ItemSize", "110", 0, "", "キッズT"],
       ["ItemSize", "130", 0, "", "キッズT"],
-      ["ItemSize", "F", 0, "", "ポーチ, トートバック, 持ち込み"]
+      ["ItemSize", "F", 0, "", "ポーチ, トートバック, 持ち込み"],
+      ["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS]
     ];
     
     initialData.forEach(row => masterSheet.appendRow(row));
   }
+
+  migrateMasterData(masterSheet);
 
   // 送料マスタ（未登録なら追加）
   const masterValues = masterSheet.getDataRange().getValues();
@@ -156,6 +163,7 @@ function setupSpreadsheet() {
       "{{orderId}} ご注文ID",
       "{{plan}} プラン",
       "{{option}} オプション",
+      "{{soundCard}} 音が聴けるカード",
       "{{item}} アイテム",
       "{{itemColor}} アイテムカラー",
       "{{itemSize}} アイテムサイズ",
@@ -173,6 +181,65 @@ function setupSpreadsheet() {
     mailSheet.setColumnWidth(2, 560);
     mailSheet.getRange("B5").setWrap(true);
     mailSheet.getRange("B7").setWrap(true);
+  } else {
+    ensureMailSoundCardTag(mailSheet);
+  }
+}
+
+/**
+ * 既存マスタへ不足行の追記・その他カラー対象の修正。
+ */
+function migrateMasterData(masterSheet) {
+  const values = masterSheet.getDataRange().getValues();
+  let hasOtherSize = false;
+
+  for (let i = 1; i < values.length; i++) {
+    const category = values[i][0];
+    const name = values[i][1];
+    if (category === "ItemColor" && name === "その他") {
+      const current = String(values[i][4] || "");
+      if (current !== OTHER_COLOR_ITEMS) {
+        masterSheet.getRange(i + 1, 5).setValue(OTHER_COLOR_ITEMS);
+      }
+    }
+    if (category === "ItemSize" && name === "その他") {
+      hasOtherSize = true;
+    }
+  }
+
+  if (!hasOtherSize) {
+    masterSheet.appendRow(["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS]);
+  }
+}
+
+/**
+ * 既存メール文面に {{soundCard}} が無ければ挿入する。
+ */
+function ensureMailSoundCardTag(mailSheet) {
+  const data = mailSheet.getDataRange().getValues();
+  for (let i = 0; i < data.length; i++) {
+    const key = String(data[i][0]).trim();
+    if (key === "本文") {
+      let body = String(data[i][1] || "");
+      if (body.indexOf("{{soundCard}}") === -1) {
+        if (body.indexOf("オプション: {{option}}") !== -1) {
+          body = body.replace(
+            "オプション: {{option}}",
+            "オプション: {{option}}\n音が聴けるカード: {{soundCard}}"
+          );
+        } else {
+          body = body + "\n音が聴けるカード: {{soundCard}}";
+        }
+        mailSheet.getRange(i + 1, 2).setValue(body);
+      }
+    }
+    if (key === "差し込みタグ") {
+      let tags = String(data[i][1] || "");
+      if (tags.indexOf("{{soundCard}}") === -1) {
+        tags = tags + "\n{{soundCard}} 音が聴けるカード";
+        mailSheet.getRange(i + 1, 2).setValue(tags);
+      }
+    }
   }
 }
 
@@ -229,6 +296,49 @@ function parseDisplayId(id) {
 }
 
 /**
+ * JSON 応答。Library 検索と注文 API で共用する。
+ */
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Library 用: Drive 固定フォルダから {name}.wav を探し、3秒音声を JSON で返す。
+ * ブラウザは Drive を直接開かず、audioBase64 から再生・ダウンロードする。
+ */
+function searchLibraryAudio(rawName) {
+  const name = String(rawName || "").replace(/^\s+|\s+$/g, "").replace(/\.wav$/i, "");
+  if (!name) {
+    return jsonResponse({ found: false });
+  }
+
+  const fileName = name + ".wav";
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const files = folder.getFilesByName(fileName);
+
+  if (!files.hasNext()) {
+    return jsonResponse({ found: false });
+  }
+
+  const file = files.next();
+  const blob = file.getBlob();
+  let mime = blob.getContentType() || "audio/wav";
+  if (mime === "application/octet-stream") {
+    mime = "audio/wav";
+  }
+
+  return jsonResponse({
+    found: true,
+    name: fileName,
+    id: file.getId(),
+    mimeType: mime,
+    audioBase64: Utilities.base64Encode(blob.getBytes())
+  });
+}
+
+/**
  * Handles GET requests: returns latest 5 files and master data,
  * OR handles search queries for the sound library when 'name' parameter is present.
  */
@@ -237,21 +347,10 @@ function doGet(e) {
   // 1. Library検索システム用 (name パラメータが存在する場合)
   // =======================================================
   if (e.parameter && e.parameter.name) {
-    const name = e.parameter.name;
-    const fileName = name + '.wav'; 
-    const folder = DriveApp.getFolderById(FOLDER_ID);
-    const files = folder.getFilesByName(fileName);
-
-    if (files.hasNext()) {
-      const file = files.next();
-      const result = {
-        found: true,
-        name: fileName,
-        id: file.getId()
-      };
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-    } else {
-      return ContentService.createTextOutput(JSON.stringify({found: false})).setMimeType(ContentService.MimeType.JSON);
+    try {
+      return searchLibraryAudio(e.parameter.name);
+    } catch (err) {
+      return jsonResponse({ found: false });
     }
   }
 
@@ -324,24 +423,36 @@ function doGet(e) {
   // Get latest 6 submissions for admin dashboard
   const submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
   const submissionData = submissionSheet.getDataRange().getValues();
+  const submissionHeader = submissionData[0] || [];
+  const col = function (name) {
+    return submissionHeader.indexOf(name);
+  };
+  const cell = function (row, name, fallback) {
+    const i = col(name);
+    if (i === -1) return fallback;
+    const v = row[i];
+    return v === "" || v === null || v === undefined ? fallback : v;
+  };
   const submissions = submissionData.slice(1).reverse().slice(0, 6).map(row => {
+    const selectedId = cell(row, "選択ID", row[1]);
     return {
-      timestamp: row[0],
-      selectedId: row[1],
-      plan: row[2],
-      option: row[3],
-      item: row[4],
-      itemColor: row[5],
-      itemSize: row[6],
-      thread1: row[7],
-      thread2: row[8],
-      thread3: row[9],
-      notes: row[10],
-      totalPrice: row[11],
-      status: row[12],
-      deliveryMethod: row[13] || "当日渡し",
-      shippingFee: row[14] || 0,
-      delivery: deliveryMap[row[1]] || null
+      timestamp: cell(row, "タイムスタンプ", row[0]),
+      selectedId: selectedId,
+      plan: cell(row, "プラン", row[2]),
+      option: cell(row, "オプション", row[3]),
+      item: cell(row, "アイテム", row[4]),
+      itemColor: cell(row, "アイテムカラー", row[5]),
+      itemSize: cell(row, "アイテムサイズ", row[6]),
+      thread1: cell(row, "糸1", row[7]),
+      thread2: cell(row, "糸2", row[8]),
+      thread3: cell(row, "糸3", row[9]),
+      notes: cell(row, "備考", row[10]),
+      totalPrice: cell(row, "トータル金額", row[11]),
+      status: cell(row, "ステータス", row[12]),
+      deliveryMethod: cell(row, "受取方法", row[13] || "当日渡し"),
+      shippingFee: cell(row, "送料", row[14] || 0),
+      soundCardQty: Number(cell(row, "音が聴けるカード", 0) || 0),
+      delivery: deliveryMap[selectedId] || null
     };
   });
   
@@ -371,25 +482,41 @@ function doPost(e) {
     
     const deliveryMethod = data.deliveryMethod === "配送" ? "配送" : "当日渡し";
     const shippingFee = data.shippingFee || 0;
-    
-    const row = [
-      timestamp,
-      data.selectedId,
-      data.plan,
-      data.option || "なし",
-      data.item,
-      data.itemColor,
-      data.itemSize,
-      data.thread1,
-      data.thread2,
-      data.thread3,
-      data.notes,
-      data.totalPrice,
-      "新規",
-      deliveryMethod,
-      shippingFee
-    ];
-    
+    const soundCardQty = Number(data.soundCardQty || 0);
+
+    // 不足ヘッダ（音が聴けるカード等）を末尾へ追加
+    const lastCol = Math.max(sheet.getLastColumn(), 1);
+    const header = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    SUBMISSION_HEADERS.forEach(function (name) {
+      if (header.indexOf(name) === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(name);
+        header.push(name);
+      }
+    });
+
+    const valuesByHeader = {
+      "タイムスタンプ": timestamp,
+      "選択ID": data.selectedId,
+      "プラン": data.plan,
+      "オプション": data.option || "なし",
+      "アイテム": data.item,
+      "アイテムカラー": data.itemColor || "",
+      "アイテムサイズ": data.itemSize || "",
+      "糸1": data.thread1,
+      "糸2": data.thread2,
+      "糸3": data.thread3,
+      "備考": data.notes,
+      "トータル金額": data.totalPrice,
+      "ステータス": "新規",
+      "受取方法": deliveryMethod,
+      "送料": shippingFee,
+      "音が聴けるカード": soundCardQty
+    };
+
+    const row = header.map(function (name) {
+      return valuesByHeader[name] !== undefined ? valuesByHeader[name] : "";
+    });
+
     sheet.appendRow(row);
     
     if (deliveryMethod === "配送") {
@@ -531,11 +658,13 @@ function sendDeliveryConfirmationMail(ss, data, shippingFee) {
     if (!to) return;
     
     const template = getMailTemplate(ss);
+    const soundCardQty = Number(data.soundCardQty || 0);
     const vars = {
       name: data.shipName || "",
       orderId: data.selectedId || "",
       plan: data.plan || "",
       option: data.option || "なし",
+      soundCard: soundCardQty > 0 ? soundCardQty + "枚" : "なし",
       item: data.item || "",
       itemColor: data.itemColor || "",
       itemSize: data.itemSize || "",

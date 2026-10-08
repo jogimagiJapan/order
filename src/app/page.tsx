@@ -2,7 +2,12 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useOrderForm } from "@/hooks/useOrderForm";
+import {
+  useOrderForm,
+  OTHER_OPTION,
+  isBringInItem,
+  formatOtherValue,
+} from "@/hooks/useOrderForm";
 import Step1_IDSelection from "@/components/Step1_IDSelection";
 import Step2_DetailsSelection from "@/components/Step2_DetailsSelection";
 import Step3_Delivery from "@/components/Step3_Delivery";
@@ -57,9 +62,17 @@ function OrderPageInner() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const itemColor = isBringInItem(order.item)
+        ? ""
+        : formatOtherValue(order.itemColor, order.itemColorOther);
+      const itemSize = formatOtherValue(order.itemSize, order.itemSizeOther);
+
       // Map threads array to thread1, 2, 3 for GAS backend compatibility
       const submissionData = {
         ...order,
+        itemColor,
+        itemSize,
+        soundCardQty: order.soundCardQty || 0,
         thread1: order.threads[0] || "",
         thread2: order.threads[1] || "",
         thread3: order.threads[2] || "",
@@ -92,12 +105,19 @@ function OrderPageInner() {
   };
 
   const threadLimit = order.plan === "Lite" ? 1 : 3;
+  const colorOk = isBringInItem(order.item)
+    ? true
+    : !!order.itemColor &&
+      (order.itemColor !== OTHER_OPTION || !!order.itemColorOther.trim());
+  const sizeOk =
+    !!order.itemSize &&
+    (order.itemSize !== OTHER_OPTION || !!order.itemSizeOther.trim());
   const isStep2Valid =
     order.plan &&
     order.option &&
     order.item &&
-    order.itemColor &&
-    order.itemSize &&
+    colorOk &&
+    sizeOk &&
     order.threads.length === threadLimit &&
     order.threads.every(t => t !== "");
 
