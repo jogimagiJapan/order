@@ -235,6 +235,7 @@ function OrderPageInner() {
           {step === 4 && (
             <Step4_Preview
               order={order}
+              staffConfirmed={isStaffConfirmed}
             />
           )}
         </main>
@@ -244,7 +245,17 @@ function OrderPageInner() {
       {step > 1 && !isSuccess && (
         <div className="nav-container">
           <div className="nav-inner">
-            <button className="btn-nav btn-back" onClick={prevStep} disabled={isSubmitting}>
+            <button
+              className="btn-nav btn-back"
+              onClick={() => {
+                if (step === 4) {
+                  setIsStaffConfirmed(false);
+                  setShowStaffConfirmation(false);
+                }
+                prevStep();
+              }}
+              disabled={isSubmitting}
+            >
               <span>←</span> BACK
             </button>
 
@@ -279,9 +290,13 @@ function OrderPageInner() {
                     setShowStaffConfirmation(true);
                   }
                 }}
-                style={{ backgroundColor: '#c06c84', minWidth: '160px' }}
+                style={{ backgroundColor: '#c06c84', minWidth: '180px' }}
               >
-                {isSubmitting ? "送信中..." : isStaffConfirmed ? "送信 →" : "決定 →"}
+                {isSubmitting
+                  ? "送信中..."
+                  : isStaffConfirmed
+                    ? "注文を送信 →"
+                    : "スタッフ確認へ →"}
               </button>
             )}
           </div>
@@ -291,33 +306,36 @@ function OrderPageInner() {
       {/* Staff Confirmation Modal */}
       {showStaffConfirmation && !isSuccess && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-icon-container">
+          <div className="modal-content modal-content-alert">
+            <div className="modal-alert-banner">まだ確定されていません</div>
+
+            <div className="modal-icon-container modal-icon-alert">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
             </div>
-            
-            <h3 className="modal-title">スタッフ確認</h3>
-            <div className="modal-text">
-              この画面をスタッフに提示してください。<br/>
-              （ここからはスタッフが操作します）
+
+            <h3 className="modal-title">スタッフ確認が必要です</h3>
+            <div className="modal-text modal-text-alert">
+              この時点では注文は送信されていません。<br />
+              端末をスタッフに渡し、<br />
+              スタッフが操作を続けてください。
             </div>
-            
+
             <div className="modal-actions">
-              <button 
+              <button
                 className="btn-modal btn-modal-primary"
                 onClick={() => {
                   setIsStaffConfirmed(true);
                   setShowStaffConfirmation(false);
                 }}
               >
-                確認
+                スタッフ確認済み
               </button>
-              
-              <button 
+
+              <button
                 className="btn-modal btn-modal-secondary"
                 onClick={() => {
                   setShowStaffConfirmation(false);

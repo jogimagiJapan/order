@@ -20,9 +20,11 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function Step4_Preview({
-    order
+    order,
+    staffConfirmed = false,
 }: {
     order: OrderState;
+    staffConfirmed?: boolean;
 }) {
     const getThreadColor = (id: string) => resolveThreadColor(id);
     const isShipping = order.deliveryMethod === "shipping";
@@ -47,9 +49,18 @@ export default function Step4_Preview({
 
     return (
         <div className="animate-fade-in pb-10">
-            <header className="mb-10 text-center">
+            <header className="mb-8 text-center">
                 <h2 className="mb-1">04. Review</h2>
                 <p className="text-sub">ご注文内容の最終確認</p>
+                {!staffConfirmed ? (
+                    <p className="review-pending-note">
+                        まだ確定されていません。下の「スタッフ確認へ」を押したあと、スタッフに端末を渡してください。
+                    </p>
+                ) : (
+                    <p className="review-ready-note">
+                        スタッフ確認済みです。「注文を送信」で完了します。
+                    </p>
+                )}
             </header>
 
             <div className="grid gap-8 preview-grid-pc">
