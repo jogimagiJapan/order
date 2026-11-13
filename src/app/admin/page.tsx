@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { resolveThreadColor } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { parseDisplayId } from "@/utils/id";
@@ -39,6 +39,32 @@ interface Submission {
     delivery?: DeliveryInfo | null;
 }
 
+interface MasterItem {
+    name: string;
+    note: string;
+}
+
+interface ReviewImageResult {
+    found: boolean;
+    reason?: string;
+    name?: string;
+    mimeType?: string;
+    imageBase64?: string;
+}
+
+const SEARCH_DEBOUNCE_MS = 400;
+const SEARCH_LIMIT = 30;
+
+/** GAS 未反映時でも Admin で同じ対応表を使う（マスタがあれば上書き） */
+const DEFAULT_PLAN_REVIEW: Record<string, string> = {
+    Lite: "wave1",
+    Limited: "",
+    "Std Wave": "review1",
+    "Std Circle": "review2",
+};
+
+const reviewImageCache = new Map<string, ReviewImageResult>();
+
 export default function AdminDashboard() {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -46,6 +72,11 @@ export default function AdminDashboard() {
     const [refreshing, setRefreshing] = useState(false);
     const [completedIds, setCompletedIds] = useState<Record<string, boolean>>({});
     const [idQuery, setIdQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Submission[] | null>(null);
+    const [searching, setSearching] = useState(false);
+    const [searchError, setSearchError] = useState("");
+    const [planReview, setPlanReview] = useState<Record<string, string>>({});
+    const searchSeq = useRef(0);
 
     useEffect(() => {
         const saved = localStorage.getItem("sts_completed_orders");
@@ -65,6 +96,11 @@ export default function AdminDashboard() {
             const res = await fetch(ACTIVE_GAS_URL);
             const data = await res.json();
             setSubmissions(data.submissions || []);
+            const reviewMap: Record<string, string> = { ...DEFAULT_PLAN_REVIEW };
+            (data.masterData?.planReview || []).forEach((row: MasterItem) => {
+                reviewMap[String(row.name).trim()] = String(row.note || "").trim();
+            });
+            setPlanReview(reviewMap);
             setSelectedIndex(0);
         } catch (err) {
             console.error("Failed to fetch submissions", err);
@@ -82,19 +118,40 @@ export default function AdminDashboard() {
         });
     };
 
-    const filteredSubmissions = useMemo(() => {
-        const q = idQuery.trim().toLowerCase();
-        if (!q) return submissions;
-        return submissions.filter(sub =>
-            String(sub.selectedId || "").toLowerCase().includes(q)
-        );
-    }, [submissions, idQuery]);
-
     useEffect(() => {
-        if (selectedIndex >= filteredSubmissions.length) {
-            setSelectedIndex(0);
+        const q = idQuery.trim();
+        if (!q) return;
+        const seq = ++searchSeq.current;
+        const timer = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({ action: "searchOrders", q });
+                const res = await fetch(`${ACTIVE_GAS_URL}?${params}`);
+                const data = await res.json();
+                if (seq !== searchSeq.current) return;
+                setSearchResults(data.results || []);
+                setSearchError(data.error ? "検索に失敗しました" : "");
+            } catch (err) {
+                console.error("Failed to search orders", err);
+                if (seq === searchSeq.current) setSearchError("検索に失敗しました");
+            } finally {
+                if (seq === searchSeq.current) setSearching(false);
+            }
+        }, SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [idQuery]);
+
+    const updateQuery = (value: string) => {
+        setIdQuery(value);
+        setSelectedIndex(0);
+        if (value.trim()) {
+            setSearching(true);
+        } else {
+            searchSeq.current++;
+            setSearchResults(null);
+            setSearching(false);
+            setSearchError("");
         }
-    }, [filteredSubmissions.length, selectedIndex]);
+    };
 
     if (loading) return (
         <div className="flex h-screen items-center justify-center font-bold text-slate-400 gap-4">
@@ -103,7 +160,10 @@ export default function AdminDashboard() {
         </div>
     );
 
-    const current = filteredSubmissions[selectedIndex];
+    const isSearchMode = idQuery.trim() !== "";
+    const list = isSearchMode ? (searchResults ?? []) : submissions;
+    const current = list[selectedIndex] ?? list[0];
+    const currentIndex = current ? list.indexOf(current) : -1;
 
     if (!submissions.length) {
         return (
@@ -126,7 +186,11 @@ export default function AdminDashboard() {
                 <main>
                     {!current ? (
                         <section className="instruction-sheet mb-4 text-center py-8">
-                            <p className="text-sub font-bold">「{idQuery}」に一致する注文はありません</p>
+                            <p className="text-sub font-bold">
+                                {searching
+                                    ? "検索中…"
+                                    : searchError || `「${idQuery.trim()}」に一致する注文はありません`}
+                            </p>
                         </section>
                     ) : (
                         <OrderDetail
@@ -134,45 +198,45 @@ export default function AdminDashboard() {
                             isCompleted={!!completedIds[current.selectedId]}
                             onToggleCompleted={() => toggleCompleted(current.selectedId)}
                             getThreadColor={getThreadColor}
+                            reviewType={planReview[String(current.plan).trim()] || ""}
                         />
                     )}
 
                     <section>
                         <h3 className="admin-label mb-2 ml-2">
-                            History{idQuery.trim() ? `（${filteredSubmissions.length}件）` : ""}
+                            {isSearchMode
+                                ? `Search（${searching ? "検索中…" : `${list.length}件${list.length >= SEARCH_LIMIT ? "・新しい順に上限" : ""}`}）`
+                                : "History"}
                         </h3>
                         <div className="admin-search mb-2">
                             <input
                                 className="admin-search-input"
                                 type="search"
-                                placeholder="ID検索（例: 005608 / username）"
+                                placeholder="ID検索（例: 20261113 / 005608 / username）"
                                 value={idQuery}
-                                onChange={(e) => {
-                                    setIdQuery(e.target.value);
-                                    setSelectedIndex(0);
-                                }}
+                                onChange={(e) => updateQuery(e.target.value)}
                             />
-                            {idQuery.trim() && (
+                            {isSearchMode && (
                                 <button
                                     type="button"
                                     className="admin-search-clear"
-                                    onClick={() => {
-                                        setIdQuery("");
-                                        setSelectedIndex(0);
-                                    }}
+                                    onClick={() => updateQuery("")}
                                 >
                                     クリア
                                 </button>
                             )}
                         </div>
+                        {isSearchMode && searchError && current && (
+                            <p className="admin-search-error mb-2">{searchError}</p>
+                        )}
                         <div className="history-list">
-                            {filteredSubmissions.map((sub, idx) => {
+                            {list.map((sub, idx) => {
                                 const subCompleted = completedIds[sub.selectedId] || false;
                                 const subDisplayId = parseDisplayId(sub.selectedId);
                                 return (
                                     <div
                                         key={`${sub.selectedId}-${idx}`}
-                                        className={`history-item transition-all ${selectedIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"} ${subCompleted ? "opacity-40 grayscale" : ""}`}
+                                        className={`history-item transition-all ${currentIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"} ${subCompleted ? "opacity-40 grayscale" : ""}`}
                                         onClick={() => setSelectedIndex(idx)}
                                     >
                                         <div className="flex items-center gap-4">
@@ -224,11 +288,13 @@ function OrderDetail({
     isCompleted,
     onToggleCompleted,
     getThreadColor,
+    reviewType,
 }: {
     current: Submission;
     isCompleted: boolean;
     onToggleCompleted: () => void;
     getThreadColor: (id: string) => { id: string; hex: string; name: string } | undefined;
+    reviewType: string;
 }) {
     const [shippingOpen, setShippingOpen] = useState(false);
 
@@ -249,7 +315,8 @@ function OrderDetail({
         : displayId.time;
     const isShippingOrder = current.deliveryMethod === "配送";
     const delivery = current.delivery;
-    const showGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
+    const hasGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
+    const hasSoundCard = (current.soundCardQty || 0) > 0;
 
     return (
         <section className={`instruction-sheet mb-4 animate-fade-in ${isCompleted ? "is-completed" : ""}`}>
@@ -288,23 +355,27 @@ function OrderDetail({
                         <p className="value">{current.plan}</p>
                         <p className="label-small">Plan</p>
                     </div>
-                    <div className="admin-grid-val">
-                        <p className="value">{current.option || "なし"}</p>
-                        <p className="label-small">Option</p>
+                    <div className={`admin-grid-val ${hasGps ? "is-emphasis" : "is-muted"}`}>
+                        <p className="value">{hasGps ? (current.option || "GPS日時") : "なし"}</p>
+                        <p className="label-small">GPS</p>
                     </div>
                 </div>
 
-                {showGps && (
+                {hasGps ? (
                     <>
-                        <div className="admin-gps-box">
+                        <div className="admin-gps-box is-emphasis">
                             <span className="admin-gps-index" aria-hidden>1</span>
                             <p className="admin-gps-text">{current.gpsDatetime || "-"}</p>
                         </div>
-                        <div className="admin-gps-box">
+                        <div className="admin-gps-box is-emphasis">
                             <span className="admin-gps-index" aria-hidden>2</span>
                             <p className="admin-gps-text">{current.gpsLocation || "-"}</p>
                         </div>
                     </>
+                ) : (
+                    <div className="admin-gps-box is-muted">
+                        <p className="admin-gps-text">なし</p>
+                    </div>
                 )}
 
                 <div className="admin-grid-2">
@@ -322,9 +393,9 @@ function OrderDetail({
                         <p className="value">{current.itemSize || "-"}</p>
                         <p className="label-small">Size</p>
                     </div>
-                    <div className="admin-grid-val">
+                    <div className={`admin-grid-val ${hasSoundCard ? "is-emphasis" : "is-muted"}`}>
                         <p className="value">
-                            {(current.soundCardQty || 0) > 0 ? `${current.soundCardQty}枚` : "なし"}
+                            {hasSoundCard ? `${current.soundCardQty}枚` : "なし"}
                         </p>
                         <p className="label-small">Sound Card</p>
                     </div>
@@ -356,6 +427,14 @@ function OrderDetail({
                     <h3 className="admin-label mb-1">Remarks</h3>
                     <p className="admin-remarks-text">{current.notes}</p>
                 </div>
+            )}
+
+            {reviewType && current.selectedId && (
+                <ReviewImage
+                    key={`${current.selectedId}|${current.plan}`}
+                    id={current.selectedId}
+                    plan={String(current.plan).trim()}
+                />
             )}
 
             {isShippingOrder && (
@@ -397,5 +476,63 @@ function OrderDetail({
                 </div>
             )}
         </section>
+    );
+}
+
+function ReviewImage({ id, plan }: { id: string; plan: string }) {
+    const cacheKey = `${id}|${plan}`;
+    const [result, setResult] = useState<ReviewImageResult | null>(
+        () => reviewImageCache.get(cacheKey) ?? null
+    );
+
+    useEffect(() => {
+        if (reviewImageCache.has(cacheKey)) return;
+        let cancelled = false;
+        const params = new URLSearchParams({ action: "reviewImage", id, plan });
+        fetch(`${ACTIVE_GAS_URL}?${params}`)
+            .then(res => res.json())
+            .then((data: ReviewImageResult) => {
+                // 見つからない結果はキャッシュしない（後から PNG が保存されることがある）
+                if (data.found) reviewImageCache.set(cacheKey, data);
+                if (!cancelled) setResult(data);
+            })
+            .catch(err => {
+                console.error("Failed to load review image", err);
+                if (!cancelled) setResult({ found: false, reason: "error" });
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [cacheKey, id, plan]);
+
+    if (result?.reason === "noPlanImage") return null;
+
+    let message = "";
+    if (!result) {
+        message = "レビュー画像を読み込み中…";
+    } else if (!result.found) {
+        if (result.reason === "noFolder") {
+            message = "マスタデータの Config / PNGフォルダ が未設定です";
+        } else if (result.reason === "notFound") {
+            message = `レビュー画像が見つかりません（${result.name}）`;
+        } else {
+            message = "レビュー画像の取得に失敗しました";
+        }
+    }
+
+    return (
+        <div className="admin-review mb-3">
+            <h3 className="admin-label mb-1">Review</h3>
+            {result?.found && result.imageBase64 ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    className="admin-review-img"
+                    src={`data:${result.mimeType || "image/png"};base64,${result.imageBase64}`}
+                    alt={result.name || "レビュー画像"}
+                />
+            ) : (
+                <p className="admin-review-empty">{message}</p>
+            )}
+        </div>
     );
 }

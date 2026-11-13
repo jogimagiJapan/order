@@ -69,6 +69,16 @@ const DEFAULT_THREAD_COLORS = [
   ["ThreadColor", "L", 0, "#823b34|Brown", "表示"]
 ];
 
+// 備考 = 表示する PNG の種類（{ID}_{種類}.png）。空欄のプランはレビュー画像を出さない
+const DEFAULT_PLAN_REVIEWS = [
+  ["PlanReview", "Lite", 0, "wave1", ""],
+  ["PlanReview", "Limited", 0, "", ""],
+  ["PlanReview", "Std Wave", 0, "review1", ""],
+  ["PlanReview", "Std Circle", 0, "review2", ""]
+];
+const PNG_FOLDER_CONFIG_NAME = "PNGフォルダ";
+const ORDER_SEARCH_LIMIT = 30;
+
 const DELIVERY_HEADERS = [
   "タイムスタンプ", "選択ID", "郵便番号", "住所", "建物名・部屋番号", "名前",
   "電話番号", "メールアドレス", "送料", "合計金額", "進捗", "送り状番号", "発送日", "備考"
@@ -191,10 +201,14 @@ function setupSpreadsheet() {
       ["ItemSize", "F", 0, "", "ポーチ, トートバック, 持ち込み"],
       ["ItemSize", "その他", 0, "", OTHER_SIZE_ITEMS],
 
-      ["GpsConfig", "緯度経度", 0, DEFAULT_GPS_LOCATION, ""]
+      ["GpsConfig", "緯度経度", 0, DEFAULT_GPS_LOCATION, ""],
+      ["Config", PNG_FOLDER_CONFIG_NAME, 0, "", ""]
     ];
 
-    initialData.concat(DEFAULT_THREAD_COLORS).forEach(row => masterSheet.appendRow(row));
+    initialData
+      .concat(DEFAULT_THREAD_COLORS)
+      .concat(DEFAULT_PLAN_REVIEWS)
+      .forEach(row => masterSheet.appendRow(row));
   }
 
   migrateMasterData(masterSheet);
@@ -267,7 +281,9 @@ function migrateMasterData(masterSheet) {
   const values = masterSheet.getDataRange().getValues();
   let hasOtherSize = false;
   let hasGpsLocation = false;
+  let hasPngFolder = false;
   const threadIds = {};
+  const planReviewNames = {};
 
   for (let i = 1; i < values.length; i++) {
     const category = values[i][0];
@@ -287,6 +303,12 @@ function migrateMasterData(masterSheet) {
     if (category === "ThreadColor") {
       threadIds[String(name)] = true;
     }
+    if (category === "Config" && name === PNG_FOLDER_CONFIG_NAME) {
+      hasPngFolder = true;
+    }
+    if (category === "PlanReview") {
+      planReviewNames[String(name)] = true;
+    }
   }
 
   if (!hasOtherSize) {
@@ -297,6 +319,14 @@ function migrateMasterData(masterSheet) {
   }
   DEFAULT_THREAD_COLORS.forEach(function (row) {
     if (!threadIds[row[1]]) {
+      masterSheet.appendRow(row);
+    }
+  });
+  if (!hasPngFolder) {
+    masterSheet.appendRow(["Config", PNG_FOLDER_CONFIG_NAME, 0, "", ""]);
+  }
+  DEFAULT_PLAN_REVIEWS.forEach(function (row) {
+    if (!planReviewNames[row[1]]) {
       masterSheet.appendRow(row);
     }
   });
@@ -488,6 +518,157 @@ function searchLibraryAudio(rawName) {
 }
 
 /**
+ * 配送情報シートを注文ID → 配送情報のマップにする（後の行が優先）。
+ */
+function readDeliveryMap(ss) {
+  const deliveryMap = {};
+  const deliverySheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
+  if (!deliverySheet) return deliveryMap;
+  deliverySheet.getDataRange().getValues().slice(1).forEach(row => {
+    if (!row[1]) return;
+    deliveryMap[row[1]] = {
+      zip: row[2],
+      address: row[3],
+      building: row[4],
+      name: row[5],
+      phone: row[6],
+      email: row[7],
+      shippingFee: row[8],
+      progress: row[10],
+      trackingNumber: row[11]
+    };
+  });
+  return deliveryMap;
+}
+
+/**
+ * 送信情報収集シートを新しい順に読み、matchId(選択ID) が true の行を最大 limit 件返す。
+ */
+function readSubmissions(ss, matchId, limit) {
+  const submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
+  const submissionData = submissionSheet.getDataRange().getValues();
+  const submissionHeader = submissionData[0] || [];
+  const col = function (name) {
+    return submissionHeader.indexOf(name);
+  };
+  const cell = function (row, name, fallback) {
+    const i = col(name);
+    if (i === -1) return fallback;
+    const v = row[i];
+    return v === "" || v === null || v === undefined ? fallback : v;
+  };
+
+  const rows = [];
+  for (let r = submissionData.length - 1; r >= 1 && rows.length < limit; r--) {
+    const row = submissionData[r];
+    if (matchId(String(cell(row, "選択ID", row[1]) || ""))) {
+      rows.push(row);
+    }
+  }
+  if (!rows.length) return [];
+
+  const deliveryMap = readDeliveryMap(ss);
+  return rows.map(row => {
+    const selectedId = cell(row, "選択ID", row[1]);
+    return {
+      timestamp: cell(row, "タイムスタンプ", row[0]),
+      selectedId: selectedId,
+      plan: cell(row, "プラン", row[2]),
+      option: cell(row, "オプション", row[3]),
+      item: cell(row, "アイテム", row[4]),
+      itemColor: cell(row, "アイテムカラー", row[5]),
+      itemSize: cell(row, "アイテムサイズ", row[6]),
+      thread1: cell(row, "糸1", row[7]),
+      thread2: cell(row, "糸2", row[8]),
+      thread3: cell(row, "糸3", row[9]),
+      notes: cell(row, "備考", row[10]),
+      totalPrice: cell(row, "トータル金額", row[11]),
+      status: cell(row, "ステータス", row[12]),
+      deliveryMethod: cell(row, "受取方法", row[13] || "当日渡し"),
+      shippingFee: cell(row, "送料", row[14] || 0),
+      soundCardQty: Number(cell(row, "音が聴けるカード", 0) || 0),
+      gpsDatetime: cell(row, "GPS日時", ""),
+      gpsLocation: cell(row, "GPS緯度経度", ""),
+      delivery: deliveryMap[selectedId] || null
+    };
+  });
+}
+
+/**
+ * ID 検索用の正規化: 大文字小文字・空白・アンダースコアを無視する。
+ */
+function normalizeOrderId(value) {
+  return String(value || "").toLowerCase().replace(/[\s_\u3000]/g, "");
+}
+
+function searchOrders(rawQuery) {
+  const query = normalizeOrderId(rawQuery);
+  if (!query) return [];
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return readSubmissions(ss, function (id) {
+    return normalizeOrderId(id).indexOf(query) !== -1;
+  }, ORDER_SEARCH_LIMIT);
+}
+
+/**
+ * Drive フォルダ URL（.../folders/XXXX）またはフォルダ ID から ID を取り出す。
+ */
+function extractDriveFolderId(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const match = text.match(/folders\/([A-Za-z0-9_-]+)/) || text.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  if (match) return match[1];
+  return /^[A-Za-z0-9_-]+$/.test(text) ? text : "";
+}
+
+/**
+ * レビュー PNG ({ID}_{種類}.png) を base64 で返す。
+ * 種類はマスタ PlanReview の備考、フォルダは Config / PNGフォルダ の備考。
+ */
+function getReviewImage(rawId, rawPlan) {
+  const id = String(rawId || "").trim().replace(/\.(wav|png)$/i, "");
+  const plan = String(rawPlan || "").trim();
+  if (!id || /[\/\\]/.test(id)) {
+    return jsonResponse({ found: false, reason: "invalidId" });
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const masterValues = ss.getSheetByName(MASTER_DATA_SHEET_NAME).getDataRange().getValues();
+  let suffix = "";
+  let folderValue = "";
+  masterValues.slice(1).forEach(row => {
+    if (row[0] === "PlanReview" && String(row[1]).trim() === plan) {
+      suffix = String(row[3] || "").trim();
+    }
+    if (row[0] === "Config" && row[1] === PNG_FOLDER_CONFIG_NAME) {
+      folderValue = row[3];
+    }
+  });
+
+  if (!suffix) {
+    return jsonResponse({ found: false, reason: "noPlanImage" });
+  }
+  const fileName = id + "_" + suffix + ".png";
+  const folderId = extractDriveFolderId(folderValue);
+  if (!folderId) {
+    return jsonResponse({ found: false, reason: "noFolder", name: fileName });
+  }
+
+  const files = DriveApp.getFolderById(folderId).getFilesByName(fileName);
+  if (!files.hasNext()) {
+    return jsonResponse({ found: false, reason: "notFound", name: fileName });
+  }
+
+  const blob = files.next().getBlob();
+  return jsonResponse({
+    found: true,
+    name: fileName,
+    mimeType: blob.getContentType() || "image/png",
+    imageBase64: Utilities.base64Encode(blob.getBytes())
+  });
+}
+
+/**
  * Handles GET requests: returns latest 5 files and master data,
  * OR handles search queries for the sound library when 'name' parameter is present.
  */
@@ -495,6 +676,26 @@ function doGet(e) {
   // =======================================================
   // 1. Library検索システム用 (name パラメータが存在する場合)
   // =======================================================
+  const action = e && e.parameter ? String(e.parameter.action || "") : "";
+
+  // Admin: 送信情報収集シート全体から ID 部分一致検索
+  if (action === "searchOrders") {
+    try {
+      return jsonResponse({ results: searchOrders(e.parameter.q) });
+    } catch (err) {
+      return jsonResponse({ results: [], error: String(err) });
+    }
+  }
+
+  // Admin: ID とプランからレビュー PNG を返す
+  if (action === "reviewImage") {
+    try {
+      return getReviewImage(e.parameter.id, e.parameter.plan);
+    } catch (err) {
+      return jsonResponse({ found: false, reason: "error", error: String(err) });
+    }
+  }
+
   if (e.parameter && e.parameter.name) {
     try {
       return searchLibraryAudio(e.parameter.name);
@@ -534,7 +735,8 @@ function doGet(e) {
     sizes: [],
     shipping: [],
     threads: [],
-    gpsConfig: []
+    gpsConfig: [],
+    planReview: []
   };
   
   masterData.slice(1).forEach(row => {
@@ -551,65 +753,11 @@ function doGet(e) {
     if (category === "Shipping") master.shipping.push(item);
     if (category === "ThreadColor") master.threads.push(item);
     if (category === "GpsConfig") master.gpsConfig.push(item);
+    if (category === "PlanReview") master.planReview.push(item);
   });
-  
-  // Delivery records keyed by order ID (latest wins)
-  const deliveryMap = {};
-  const deliverySheet = ss.getSheetByName(DELIVERY_SHEET_NAME);
-  if (deliverySheet) {
-    deliverySheet.getDataRange().getValues().slice(1).forEach(row => {
-      if (!row[1]) return;
-      deliveryMap[row[1]] = {
-        zip: row[2],
-        address: row[3],
-        building: row[4],
-        name: row[5],
-        phone: row[6],
-        email: row[7],
-        shippingFee: row[8],
-        progress: row[10],
-        trackingNumber: row[11]
-      };
-    });
-  }
   
   // Get latest 10 submissions for admin dashboard
-  const submissionSheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
-  const submissionData = submissionSheet.getDataRange().getValues();
-  const submissionHeader = submissionData[0] || [];
-  const col = function (name) {
-    return submissionHeader.indexOf(name);
-  };
-  const cell = function (row, name, fallback) {
-    const i = col(name);
-    if (i === -1) return fallback;
-    const v = row[i];
-    return v === "" || v === null || v === undefined ? fallback : v;
-  };
-  const submissions = submissionData.slice(1).reverse().slice(0, 10).map(row => {
-    const selectedId = cell(row, "選択ID", row[1]);
-    return {
-      timestamp: cell(row, "タイムスタンプ", row[0]),
-      selectedId: selectedId,
-      plan: cell(row, "プラン", row[2]),
-      option: cell(row, "オプション", row[3]),
-      item: cell(row, "アイテム", row[4]),
-      itemColor: cell(row, "アイテムカラー", row[5]),
-      itemSize: cell(row, "アイテムサイズ", row[6]),
-      thread1: cell(row, "糸1", row[7]),
-      thread2: cell(row, "糸2", row[8]),
-      thread3: cell(row, "糸3", row[9]),
-      notes: cell(row, "備考", row[10]),
-      totalPrice: cell(row, "トータル金額", row[11]),
-      status: cell(row, "ステータス", row[12]),
-      deliveryMethod: cell(row, "受取方法", row[13] || "当日渡し"),
-      shippingFee: cell(row, "送料", row[14] || 0),
-      soundCardQty: Number(cell(row, "音が聴けるカード", 0) || 0),
-      gpsDatetime: cell(row, "GPS日時", ""),
-      gpsLocation: cell(row, "GPS緯度経度", ""),
-      delivery: deliveryMap[selectedId] || null
-    };
-  });
+  const submissions = readSubmissions(ss, function () { return true; }, 10);
   
   const response = {
     latestFiles: latestFiles,
