@@ -254,7 +254,7 @@ export default function AdminDashboard() {
                                                 {ticket >= 1 && ticket <= 6 ? ticket : "–"}
                                             </span>
                                             <span className="history-time">
-                                                {subDisplayId.time || "—"}
+                                                {subDisplayId.datetime || "—"}
                                                 {sub.deliveryMethod === "配送" && (
                                                     <span className="history-ship-mark">配送</span>
                                                 )}

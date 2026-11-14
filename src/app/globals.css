@@ -1145,7 +1145,7 @@ textarea:focus {
 .history-item.history-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 1.75rem 4.5rem minmax(0, 1fr) auto auto;
+  grid-template-columns: 1.75rem minmax(7.5rem, auto) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px 10px;
   text-align: left;
@@ -1173,10 +1173,11 @@ textarea:focus {
 }
 
 .history-time {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 900;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .history-user {
@@ -1632,7 +1633,7 @@ textarea:focus {
 }
 
 .admin-compact .history-item.history-row {
-  grid-template-columns: 1.6rem 4.2rem minmax(0, 1fr) auto auto;
+  grid-template-columns: 1.6rem minmax(7.2rem, auto) minmax(0, 1fr) auto auto;
   gap: 6px 8px;
   padding: 8px 10px;
 }
