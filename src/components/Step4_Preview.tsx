@@ -22,9 +22,11 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 export default function Step4_Preview({
     order,
     staffConfirmed = false,
+    ticketNumber = null,
 }: {
     order: OrderState;
     staffConfirmed?: boolean;
+    ticketNumber?: number | null;
 }) {
     const getThreadColor = (id: string) => resolveThreadColor(id);
     const isShipping = order.deliveryMethod === "shipping";
@@ -58,7 +60,8 @@ export default function Step4_Preview({
                     </p>
                 ) : (
                     <p className="review-ready-note">
-                        スタッフ確認済みです。「注文を送信」で完了します。
+                        スタッフ確認済みです。整理番号を選んで送信してください
+                        {ticketNumber ? `（選択中: ${ticketNumber}）` : ""}。
                     </p>
                 )}
             </header>

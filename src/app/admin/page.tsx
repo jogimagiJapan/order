@@ -36,6 +36,7 @@ interface Submission {
     soundCardQty: number;
     gpsDatetime: string;
     gpsLocation: string;
+    ticketNumber?: number | string;
     delivery?: DeliveryInfo | null;
 }
 
@@ -70,7 +71,6 @@ export default function AdminDashboard() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [completedIds, setCompletedIds] = useState<Record<string, boolean>>({});
     const [idQuery, setIdQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Submission[] | null>(null);
     const [searching, setSearching] = useState(false);
@@ -79,14 +79,6 @@ export default function AdminDashboard() {
     const searchSeq = useRef(0);
 
     useEffect(() => {
-        const saved = localStorage.getItem("sts_completed_orders");
-        if (saved) {
-            try {
-                setCompletedIds(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse completed orders", e);
-            }
-        }
         fetchData();
     }, []);
 
@@ -109,14 +101,6 @@ export default function AdminDashboard() {
             setRefreshing(false);
         }
     }
-
-    const toggleCompleted = (id: string) => {
-        setCompletedIds(prev => {
-            const next = { ...prev, [id]: !prev[id] };
-            localStorage.setItem("sts_completed_orders", JSON.stringify(next));
-            return next;
-        });
-    };
 
     useEffect(() => {
         const q = idQuery.trim();
@@ -195,8 +179,6 @@ export default function AdminDashboard() {
                     ) : (
                         <OrderDetail
                             current={current}
-                            isCompleted={!!completedIds[current.selectedId]}
-                            onToggleCompleted={() => toggleCompleted(current.selectedId)}
                             getThreadColor={getThreadColor}
                             reviewType={planReview[String(current.plan).trim()] || ""}
                         />
@@ -231,17 +213,17 @@ export default function AdminDashboard() {
                         )}
                         <div className="history-list">
                             {list.map((sub, idx) => {
-                                const subCompleted = completedIds[sub.selectedId] || false;
                                 const subDisplayId = parseDisplayId(sub.selectedId);
+                                const ticket = Number(sub.ticketNumber);
                                 return (
                                     <div
                                         key={`${sub.selectedId}-${idx}`}
-                                        className={`history-item transition-all ${currentIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"} ${subCompleted ? "opacity-40 grayscale" : ""}`}
+                                        className={`history-item transition-all ${currentIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"}`}
                                         onClick={() => setSelectedIndex(idx)}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                                {idx + 1}
+                                            <div className={`history-ticket ${ticket >= 1 && ticket <= 6 ? "" : "is-empty"}`}>
+                                                {ticket >= 1 && ticket <= 6 ? ticket : "–"}
                                             </div>
                                             <div className="history-display-id">
                                                 <span className="id-time">
@@ -285,14 +267,10 @@ export default function AdminDashboard() {
 
 function OrderDetail({
     current,
-    isCompleted,
-    onToggleCompleted,
     getThreadColor,
     reviewType,
 }: {
     current: Submission;
-    isCompleted: boolean;
-    onToggleCompleted: () => void;
     getThreadColor: (id: string) => { id: string; hex: string; name: string } | undefined;
     reviewType: string;
 }) {
@@ -317,35 +295,32 @@ function OrderDetail({
     const delivery = current.delivery;
     const hasGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
     const hasSoundCard = (current.soundCardQty || 0) > 0;
+    const ticket = Number(current.ticketNumber);
+    const hasTicket = ticket >= 1 && ticket <= 6;
 
     return (
-        <section className={`instruction-sheet mb-4 animate-fade-in ${isCompleted ? "is-completed" : ""}`}>
+        <section className="instruction-sheet mb-4 animate-fade-in">
             <div className="admin-card-header mb-4">
                 <div className="admin-header-row">
-                    <div className="admin-badge-group">
-                        <span className={`admin-badge ${isCompleted ? "is-done" : ""}`}>
-                            {isCompleted ? "COMPLETED" : "NEW ORDER"}
-                        </span>
-                        {isShippingOrder && <span className="admin-badge is-shipping">配送</span>}
-                    </div>
+                    {isShippingOrder ? (
+                        <span className="admin-badge is-shipping">配送</span>
+                    ) : (
+                        <span />
+                    )}
                     <p className="admin-timestamp">{formattedTimestamp}</p>
+                </div>
+
+                <div className="admin-ticket-row">
+                    <div className={`admin-ticket-number ${hasTicket ? "" : "is-empty"}`}>
+                        {hasTicket ? ticket : "–"}
+                    </div>
+                    <p className="admin-price">
+                        ¥{Number(current.totalPrice || 0).toLocaleString()}
+                    </p>
                 </div>
 
                 <div className="admin-display-id">
                     <span className="id-line">{idLine}</span>
-                </div>
-
-                <div className="admin-header-row admin-header-row-end">
-                    <button
-                        type="button"
-                        className={`admin-complete-btn ${isCompleted ? "is-done" : ""}`}
-                        onClick={onToggleCompleted}
-                    >
-                        {isCompleted ? "作業完了" : "作業中"}
-                    </button>
-                    <p className="admin-price">
-                        ¥{Number(current.totalPrice || 0).toLocaleString()}
-                    </p>
                 </div>
             </div>
 

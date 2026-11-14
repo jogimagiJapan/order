@@ -47,7 +47,7 @@ const DEFAULT_MAIL_BODY = [
 const SUBMISSION_HEADERS = [
   "タイムスタンプ", "選択ID", "プラン", "オプション", "アイテム", "アイテムカラー",
   "アイテムサイズ", "糸1", "糸2", "糸3", "備考", "トータル金額", "ステータス",
-  "受取方法", "送料", "音が聴けるカード", "GPS日時", "GPS緯度経度"
+  "受取方法", "送料", "音が聴けるカード", "GPS日時", "GPS緯度経度", "整理番号"
 ];
 
 const OTHER_COLOR_ITEMS = "Tシャツ, ロンT, キッズT, トートバック";
@@ -589,6 +589,7 @@ function readSubmissions(ss, matchId, limit) {
       soundCardQty: Number(cell(row, "音が聴けるカード", 0) || 0),
       gpsDatetime: cell(row, "GPS日時", ""),
       gpsLocation: cell(row, "GPS緯度経度", ""),
+      ticketNumber: Number(cell(row, "整理番号", "") || 0) || "",
       delivery: deliveryMap[selectedId] || null
     };
   });
@@ -786,6 +787,13 @@ function doPost(e) {
     const deliveryMethod = data.deliveryMethod === "配送" ? "配送" : "当日渡し";
     const shippingFee = data.shippingFee || 0;
     const soundCardQty = Number(data.soundCardQty || 0);
+    const ticketNumber = Number(data.ticketNumber);
+    if (!(ticketNumber >= 1 && ticketNumber <= 6)) {
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "error",
+        error: "整理番号は1〜6で指定してください"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
     // 不足ヘッダ（音が聴けるカード等）を末尾へ追加
     const lastCol = Math.max(sheet.getLastColumn(), 1);
@@ -815,7 +823,8 @@ function doPost(e) {
       "送料": shippingFee,
       "音が聴けるカード": soundCardQty,
       "GPS日時": data.option === "GPS日時" ? (data.gpsDatetime || "") : "",
-      "GPS緯度経度": data.option === "GPS日時" ? (data.gpsLocation || "") : ""
+      "GPS緯度経度": data.option === "GPS日時" ? (data.gpsLocation || "") : "",
+      "整理番号": ticketNumber
     };
 
     const row = header.map(function (name) {

@@ -44,7 +44,18 @@ function OrderPageInner() {
   const [fromQR, setFromQR] = useState(false);
   const [showStaffConfirmation, setShowStaffConfirmation] = useState(false);
   const [isStaffConfirmed, setIsStaffConfirmed] = useState(false);
+  const [staffModalStep, setStaffModalStep] = useState<"confirm" | "pick" | "review">("confirm");
+  const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const searchParams = useSearchParams();
+
+  const TICKET_NUMBERS = [1, 2, 3, 4, 5, 6] as const;
+
+  const resetStaffFlow = () => {
+    setShowStaffConfirmation(false);
+    setIsStaffConfirmed(false);
+    setStaffModalStep("confirm");
+    setTicketNumber(null);
+  };
 
   // URL Parameter Handling
   useEffect(() => {
@@ -60,7 +71,11 @@ function OrderPageInner() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (ticket: number) => {
+    if (!(ticket >= 1 && ticket <= 6)) {
+      alert("整理番号を1〜6から選んでください");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const itemColor = isBringInItem(order.item)
@@ -74,6 +89,7 @@ function OrderPageInner() {
         itemColor,
         itemSize,
         soundCardQty: order.soundCardQty || 0,
+        ticketNumber: ticket,
         thread1: order.threads[0] || "",
         thread2: order.threads[1] || "",
         thread3: order.threads[2] || "",
@@ -151,11 +167,18 @@ function OrderPageInner() {
           </div>
           
           <h1 className="text-3xl font-black tracking-[0.2em] mb-4 text-text-main">THANK YOU</h1>
+
+          {ticketNumber && (
+            <div className="ticket-success-number mb-4" aria-label={`整理番号 ${ticketNumber}`}>
+              {ticketNumber}
+            </div>
+          )}
           
           <div className="w-12 h-0.5 bg-accent-gold/30 mx-auto mb-6"></div>
           
           <p className="text-sub mb-10 leading-relaxed font-medium">
             ご注文を承りました。<br />
+            {ticketNumber ? <>整理番号は <strong>{ticketNumber}</strong> です。<br /></> : null}
             仕上がりまで、どうぞ楽しみにお待ちください。
           </p>
 
@@ -236,6 +259,7 @@ function OrderPageInner() {
             <Step4_Preview
               order={order}
               staffConfirmed={isStaffConfirmed}
+              ticketNumber={ticketNumber}
             />
           )}
         </main>
@@ -248,10 +272,7 @@ function OrderPageInner() {
             <button
               className="btn-nav btn-back"
               onClick={() => {
-                if (step === 4) {
-                  setIsStaffConfirmed(false);
-                  setShowStaffConfirmation(false);
-                }
+                if (step === 4) resetStaffFlow();
                 prevStep();
               }}
               disabled={isSubmitting}
@@ -284,68 +305,132 @@ function OrderPageInner() {
                 className="btn-nav btn-continue"
                 disabled={isSubmitting}
                 onClick={() => {
-                  if (isStaffConfirmed) {
-                    handleSubmit();
-                  } else {
-                    setShowStaffConfirmation(true);
-                  }
+                  setStaffModalStep(isStaffConfirmed ? (ticketNumber ? "review" : "pick") : "confirm");
+                  setShowStaffConfirmation(true);
                 }}
                 style={{ backgroundColor: '#c06c84', minWidth: '180px' }}
               >
-                {isSubmitting
-                  ? "送信中..."
-                  : isStaffConfirmed
-                    ? "注文を送信 →"
-                    : "スタッフ確認へ →"}
+                {isSubmitting ? "送信中..." : "スタッフ確認へ →"}
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Staff Confirmation Modal */}
+      {/* Staff Confirmation Modal: 確認 → 番号選択 → 大きく表示して送信 */}
       {showStaffConfirmation && !isSuccess && (
         <div className="modal-overlay">
-          <div className="modal-content modal-content-alert">
-            <div className="modal-alert-banner">まだ確定されていません</div>
+          <div className={`modal-content ${staffModalStep === "confirm" ? "modal-content-alert" : ""}`}>
+            {staffModalStep === "confirm" && (
+              <>
+                <div className="modal-alert-banner">まだ確定されていません</div>
 
-            <div className="modal-icon-container modal-icon-alert">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-            </div>
+                <div className="modal-icon-container modal-icon-alert">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
 
-            <h3 className="modal-title">スタッフ確認が必要です</h3>
-            <div className="modal-text modal-text-alert">
-              この時点では注文は送信されていません。<br />
-              端末をスタッフに渡し、<br />
-              スタッフが操作を続けてください。
-            </div>
+                <h3 className="modal-title">スタッフ確認が必要です</h3>
+                <div className="modal-text modal-text-alert">
+                  この時点では注文は送信されていません。<br />
+                  端末をスタッフに渡し、<br />
+                  スタッフが操作を続けてください。
+                </div>
 
-            <div className="modal-actions">
-              <button
-                className="btn-modal btn-modal-primary"
-                onClick={() => {
-                  setIsStaffConfirmed(true);
-                  setShowStaffConfirmation(false);
-                }}
-              >
-                スタッフ確認済み
-              </button>
+                <div className="modal-actions">
+                  <button
+                    className="btn-modal btn-modal-primary"
+                    onClick={() => {
+                      setIsStaffConfirmed(true);
+                      setTicketNumber(null);
+                      setStaffModalStep("pick");
+                    }}
+                  >
+                    スタッフ確認済み
+                  </button>
 
-              <button
-                className="btn-modal btn-modal-secondary"
-                onClick={() => {
-                  setShowStaffConfirmation(false);
-                  setIsStaffConfirmed(false);
-                }}
-                disabled={isSubmitting}
-              >
-                もどる
-              </button>
-            </div>
+                  <button
+                    className="btn-modal btn-modal-secondary"
+                    onClick={resetStaffFlow}
+                    disabled={isSubmitting}
+                  >
+                    もどる
+                  </button>
+                </div>
+              </>
+            )}
+
+            {staffModalStep === "pick" && (
+              <>
+                <h3 className="modal-title">整理番号を選ぶ</h3>
+                <p className="modal-text modal-text-plain">
+                  1〜6の番号を押してください。<br />
+                  次の画面で確認してから送信します。
+                </p>
+                <div className="ticket-pad" role="group" aria-label="整理番号">
+                  {TICKET_NUMBERS.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className="ticket-pad-btn"
+                      onClick={() => {
+                        setTicketNumber(n);
+                        setStaffModalStep("review");
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <div className="modal-actions" style={{ marginTop: 20 }}>
+                  <button
+                    className="btn-modal btn-modal-secondary"
+                    onClick={() => {
+                      setTicketNumber(null);
+                      setStaffModalStep("confirm");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    もどる
+                  </button>
+                </div>
+              </>
+            )}
+
+            {staffModalStep === "review" && ticketNumber !== null && (
+              <>
+                <h3 className="modal-title">この番号で送信しますか？</h3>
+                <div className="ticket-review-number" aria-live="polite">
+                  {ticketNumber}
+                </div>
+                <p className="modal-text modal-text-plain">
+                  整理番号 <strong>{ticketNumber}</strong>
+                </p>
+                <div className="modal-actions">
+                  <button
+                    className="btn-modal btn-modal-primary"
+                    onClick={() => handleSubmit(ticketNumber)}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "送信中..." : "この番号で送信"}
+                  </button>
+                  <button
+                    className="btn-modal btn-modal-secondary"
+                    onClick={() => {
+                      setTicketNumber(null);
+                      setStaffModalStep("pick");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    番号を選び直す
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
