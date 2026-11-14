@@ -1124,15 +1124,15 @@ textarea:focus {
 }
 
 .history-ticket {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 10px;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
   background: #0f172a;
   color: #fff;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 900;
   flex-shrink: 0;
 }
@@ -1140,6 +1140,86 @@ textarea:focus {
 .history-ticket.is-empty {
   background: #e2e8f0;
   color: #94a3b8;
+}
+
+.history-item.history-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.75rem 4.5rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px 10px;
+  text-align: left;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.history-row.is-active {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
+  background: #f8fafc;
+}
+
+.history-time,
+.history-user,
+.history-plan,
+.history-price {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.history-time {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-user {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.history-plan {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-align: right;
+}
+
+.history-price {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748b;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-history-meta {
+  margin-left: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  text-transform: none;
+}
+
+.admin-history-empty {
+  padding: 18px 14px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px dashed #e2e8f0;
 }
 
 .admin-display-id {
@@ -1350,6 +1430,7 @@ textarea:focus {
   border-color: var(--accent-gold);
 }
 
+.admin-search-btn,
 .admin-search-clear {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -1360,6 +1441,18 @@ textarea:focus {
   color: var(--text-sub);
   cursor: pointer;
   white-space: nowrap;
+}
+
+.admin-search-btn {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #fff;
+}
+
+.admin-search-btn:disabled,
+.admin-search-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .admin-remarks {
@@ -1533,8 +1626,15 @@ textarea:focus {
 }
 
 .admin-compact .admin-search-input,
+.admin-compact .admin-search-btn,
 .admin-compact .admin-search-clear {
   padding: 10px 12px;
+}
+
+.admin-compact .history-item.history-row {
+  grid-template-columns: 1.6rem 4.2rem minmax(0, 1fr) auto auto;
+  gap: 6px 8px;
+  padding: 8px 10px;
 }
 
 .admin-compact .history-list {
@@ -1653,11 +1753,8 @@ textarea:focus {
 }
 
 .history-item {
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
+  min-height: 44px;
+  padding: 10px 12px;
   background: white;
   border-radius: 12px;
   margin-bottom: 8px;

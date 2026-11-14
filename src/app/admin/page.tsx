@@ -53,7 +53,6 @@ interface ReviewImageResult {
     imageBase64?: string;
 }
 
-const SEARCH_DEBOUNCE_MS = 400;
 const SEARCH_LIMIT = 30;
 
 /** GAS 未反映時でも Admin で同じ対応表を使う（マスタがあれば上書き） */
@@ -66,12 +65,17 @@ const DEFAULT_PLAN_REVIEW: Record<string, string> = {
 
 const reviewImageCache = new Map<string, ReviewImageResult>();
 
+function orderKey(sub: Submission) {
+    return `${sub.selectedId}|${sub.timestamp}`;
+}
+
 export default function AdminDashboard() {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [selectedOrder, setSelectedOrder] = useState<Submission | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [idQuery, setIdQuery] = useState("");
+    const [activeQuery, setActiveQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Submission[] | null>(null);
     const [searching, setSearching] = useState(false);
     const [searchError, setSearchError] = useState("");
@@ -87,13 +91,19 @@ export default function AdminDashboard() {
         try {
             const res = await fetch(ACTIVE_GAS_URL);
             const data = await res.json();
-            setSubmissions(data.submissions || []);
+            const next: Submission[] = data.submissions || [];
+            setSubmissions(next);
             const reviewMap: Record<string, string> = { ...DEFAULT_PLAN_REVIEW };
             (data.masterData?.planReview || []).forEach((row: MasterItem) => {
                 reviewMap[String(row.name).trim()] = String(row.note || "").trim();
             });
             setPlanReview(reviewMap);
-            setSelectedIndex(0);
+            // 詳細は自動で切り替えない。未選択時だけ先頭を選ぶ
+            setSelectedOrder(prev => {
+                if (!prev) return next[0] || null;
+                const fresh = next.find(s => orderKey(s) === orderKey(prev));
+                return fresh || prev;
+            });
         } catch (err) {
             console.error("Failed to fetch submissions", err);
         } finally {
@@ -102,38 +112,40 @@ export default function AdminDashboard() {
         }
     }
 
-    useEffect(() => {
-        const q = idQuery.trim();
-        if (!q) return;
-        const seq = ++searchSeq.current;
-        const timer = setTimeout(async () => {
-            try {
-                const params = new URLSearchParams({ action: "searchOrders", q });
-                const res = await fetch(`${ACTIVE_GAS_URL}?${params}`);
-                const data = await res.json();
-                if (seq !== searchSeq.current) return;
-                setSearchResults(data.results || []);
-                setSearchError(data.error ? "検索に失敗しました" : "");
-            } catch (err) {
-                console.error("Failed to search orders", err);
-                if (seq === searchSeq.current) setSearchError("検索に失敗しました");
-            } finally {
-                if (seq === searchSeq.current) setSearching(false);
-            }
-        }, SEARCH_DEBOUNCE_MS);
-        return () => clearTimeout(timer);
-    }, [idQuery]);
+    const clearSearch = () => {
+        searchSeq.current++;
+        setIdQuery("");
+        setActiveQuery("");
+        setSearchResults(null);
+        setSearching(false);
+        setSearchError("");
+    };
 
-    const updateQuery = (value: string) => {
-        setIdQuery(value);
-        setSelectedIndex(0);
-        if (value.trim()) {
-            setSearching(true);
-        } else {
-            searchSeq.current++;
-            setSearchResults(null);
-            setSearching(false);
-            setSearchError("");
+    const runSearch = async () => {
+        const q = idQuery.trim();
+        if (!q) {
+            clearSearch();
+            return;
+        }
+        const seq = ++searchSeq.current;
+        setSearching(true);
+        setSearchError("");
+        setActiveQuery(q);
+        try {
+            const params = new URLSearchParams({ action: "searchOrders", q });
+            const res = await fetch(`${ACTIVE_GAS_URL}?${params}`);
+            const data = await res.json();
+            if (seq !== searchSeq.current) return;
+            setSearchResults(data.results || []);
+            setSearchError(data.error ? "検索に失敗しました" : "");
+        } catch (err) {
+            console.error("Failed to search orders", err);
+            if (seq === searchSeq.current) {
+                setSearchResults([]);
+                setSearchError("検索に失敗しました");
+            }
+        } finally {
+            if (seq === searchSeq.current) setSearching(false);
         }
     };
 
@@ -144,10 +156,9 @@ export default function AdminDashboard() {
         </div>
     );
 
-    const isSearchMode = idQuery.trim() !== "";
+    const isSearchMode = activeQuery !== "";
     const list = isSearchMode ? (searchResults ?? []) : submissions;
-    const current = list[selectedIndex] ?? list[0];
-    const currentIndex = current ? list.indexOf(current) : -1;
+    const selectedKey = selectedOrder ? orderKey(selectedOrder) : "";
 
     if (!submissions.length) {
         return (
@@ -159,6 +170,7 @@ export default function AdminDashboard() {
     }
 
     const getThreadColor = (id: string) => resolveThreadColor(id);
+    const canClear = isSearchMode || idQuery.trim() !== "";
 
     return (
         <div className="bg-slate-50 min-h-screen pb-24 admin-compact">
@@ -168,27 +180,24 @@ export default function AdminDashboard() {
                 </header>
 
                 <main>
-                    {!current ? (
-                        <section className="instruction-sheet mb-4 text-center py-8">
-                            <p className="text-sub font-bold">
-                                {searching
-                                    ? "検索中…"
-                                    : searchError || `「${idQuery.trim()}」に一致する注文はありません`}
-                            </p>
-                        </section>
-                    ) : (
+                    {selectedOrder && (
                         <OrderDetail
-                            current={current}
+                            current={selectedOrder}
                             getThreadColor={getThreadColor}
-                            reviewType={planReview[String(current.plan).trim()] || ""}
+                            reviewType={planReview[String(selectedOrder.plan).trim()] || ""}
                         />
                     )}
 
                     <section>
                         <h3 className="admin-label mb-2 ml-2">
-                            {isSearchMode
-                                ? `Search（${searching ? "検索中…" : `${list.length}件${list.length >= SEARCH_LIMIT ? "・新しい順に上限" : ""}`}）`
-                                : "History"}
+                            History
+                            {isSearchMode && (
+                                <span className="admin-history-meta">
+                                    {searching
+                                        ? "検索中…"
+                                        : `${list.length}件${list.length >= SEARCH_LIMIT ? "・上限" : ""}`}
+                                </span>
+                            )}
                         </h3>
                         <div className="admin-search mb-2">
                             <input
@@ -196,54 +205,71 @@ export default function AdminDashboard() {
                                 type="search"
                                 placeholder="ID検索（例: 20261113 / 005608 / username）"
                                 value={idQuery}
-                                onChange={(e) => updateQuery(e.target.value)}
+                                onChange={(e) => setIdQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        runSearch();
+                                    }
+                                }}
                             />
-                            {isSearchMode && (
-                                <button
-                                    type="button"
-                                    className="admin-search-clear"
-                                    onClick={() => updateQuery("")}
-                                >
-                                    クリア
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                className="admin-search-btn"
+                                onClick={runSearch}
+                                disabled={searching || !idQuery.trim()}
+                            >
+                                {searching ? "…" : "検索"}
+                            </button>
+                            <button
+                                type="button"
+                                className="admin-search-clear"
+                                onClick={clearSearch}
+                                disabled={!canClear || searching}
+                            >
+                                クリア
+                            </button>
                         </div>
-                        {isSearchMode && searchError && current && (
+                        {searchError && (
                             <p className="admin-search-error mb-2">{searchError}</p>
                         )}
                         <div className="history-list">
-                            {list.map((sub, idx) => {
-                                const subDisplayId = parseDisplayId(sub.selectedId);
-                                const ticket = Number(sub.ticketNumber);
-                                return (
-                                    <div
-                                        key={`${sub.selectedId}-${idx}`}
-                                        className={`history-item transition-all ${currentIndex === idx ? "border-slate-900 ring-2 ring-slate-900/5 bg-slate-50" : "hover:bg-slate-50/50"}`}
-                                        onClick={() => setSelectedIndex(idx)}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`history-ticket ${ticket >= 1 && ticket <= 6 ? "" : "is-empty"}`}>
+                            {isSearchMode && !searching && list.length === 0 ? (
+                                <p className="admin-history-empty">
+                                    「{activeQuery}」に一致する注文はありません
+                                </p>
+                            ) : (
+                                list.map((sub, idx) => {
+                                    const subDisplayId = parseDisplayId(sub.selectedId);
+                                    const ticket = Number(sub.ticketNumber);
+                                    const isActive = selectedKey === orderKey(sub);
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={`${orderKey(sub)}-${idx}`}
+                                            className={`history-item history-row ${isActive ? "is-active" : ""}`}
+                                            onClick={() => setSelectedOrder(sub)}
+                                        >
+                                            <span className={`history-ticket ${ticket >= 1 && ticket <= 6 ? "" : "is-empty"}`}>
                                                 {ticket >= 1 && ticket <= 6 ? ticket : "–"}
-                                            </div>
-                                            <div className="history-display-id">
-                                                <span className="id-time">
-                                                    {subDisplayId.time}
-                                                    {sub.deliveryMethod === "配送" && (
-                                                        <span className="history-ship-mark">配送</span>
-                                                    )}
-                                                </span>
-                                                {subDisplayId.username && (
-                                                    <span className="id-user">{subDisplayId.username}</span>
+                                            </span>
+                                            <span className="history-time">
+                                                {subDisplayId.time || "—"}
+                                                {sub.deliveryMethod === "配送" && (
+                                                    <span className="history-ship-mark">配送</span>
                                                 )}
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-black text-slate-900 uppercase">{sub.plan}</p>
-                                            <p className="text-xs font-bold text-slate-400">¥{Number(sub.totalPrice || 0).toLocaleString()}</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                            </span>
+                                            <span className="history-user">
+                                                {subDisplayId.username || "—"}
+                                            </span>
+                                            <span className="history-plan">{sub.plan}</span>
+                                            <span className="history-price">
+                                                ¥{Number(sub.totalPrice || 0).toLocaleString()}
+                                            </span>
+                                        </button>
+                                    );
+                                })
+                            )}
                         </div>
                     </section>
                 </main>
