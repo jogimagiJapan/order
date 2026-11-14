@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { resolveThreadColor } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
-import { parseDisplayId } from "@/utils/id";
+import { formatShortDisplayId, parseDisplayId } from "@/utils/id";
 
 interface DeliveryInfo {
     zip: string;
@@ -313,10 +313,7 @@ function OrderDetail({
         hour: "2-digit",
         minute: "2-digit",
     });
-    const displayId = parseDisplayId(current.selectedId);
-    const idLine = displayId.username
-        ? `${displayId.time}_${displayId.username}`
-        : displayId.time;
+    const idLine = formatShortDisplayId(current.selectedId);
     const isShippingOrder = current.deliveryMethod === "配送";
     const delivery = current.delivery;
     const hasGps = current.option === "GPS日時" || !!current.gpsDatetime || !!current.gpsLocation;
@@ -327,26 +324,23 @@ function OrderDetail({
     return (
         <section className="instruction-sheet mb-4 animate-fade-in">
             <div className="admin-card-header mb-4">
-                <div className="admin-header-row">
-                    {isShippingOrder ? (
+                {isShippingOrder && (
+                    <div className="admin-header-row">
                         <span className="admin-badge is-shipping">配送</span>
-                    ) : (
-                        <span />
-                    )}
-                    <p className="admin-timestamp">{formattedTimestamp}</p>
-                </div>
-
-                <div className="admin-ticket-row">
-                    <div className={`admin-ticket-number ${hasTicket ? "" : "is-empty"}`}>
-                        {hasTicket ? ticket : "–"}
                     </div>
+                )}
+
+                <div className="admin-detail-header">
+                    <div className={`admin-ticket-box ${hasTicket ? "" : "is-empty"}`}>
+                        <span className="admin-ticket-number">
+                            {hasTicket ? ticket : "–"}
+                        </span>
+                    </div>
+                    <p className="admin-timestamp">{formattedTimestamp}</p>
                     <p className="admin-price">
                         ¥{Number(current.totalPrice || 0).toLocaleString()}
                     </p>
-                </div>
-
-                <div className="admin-display-id">
-                    <span className="id-line">{idLine}</span>
+                    <p className="admin-detail-id">{idLine}</p>
                 </div>
             </div>
 

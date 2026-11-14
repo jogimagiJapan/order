@@ -1091,16 +1091,37 @@ textarea:focus {
   color: #64748b;
 }
 
-.admin-ticket-row {
+.admin-detail-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
+}
+
+.admin-ticket-box {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: stretch;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 4px 0 8px;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  padding: 10px 14px;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.admin-ticket-box.is-empty {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .admin-ticket-number {
-  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-size: clamp(2.75rem, 12vw, 4rem);
   font-weight: 900;
   line-height: 0.9;
   letter-spacing: -0.04em;
@@ -1108,19 +1129,50 @@ textarea:focus {
   font-variant-numeric: tabular-nums;
 }
 
-.admin-ticket-number.is-empty {
+.admin-ticket-box.is-empty .admin-ticket-number {
   color: #cbd5e1;
 }
 
-.admin-price {
-  font-size: clamp(1.25rem, 5vw, 1.75rem);
+.admin-detail-header .admin-timestamp {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  text-align: center;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.admin-detail-header .admin-price {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin: 0;
+  font-size: clamp(1.15rem, 4.5vw, 1.5rem);
   font-weight: 900;
   font-family: var(--font-title);
   color: #0f172a;
   line-height: 1;
   text-align: right;
   white-space: nowrap;
-  margin-left: auto;
+}
+
+.admin-detail-id {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  justify-self: end;
+  margin: 0;
+  max-width: 100%;
+  font-size: clamp(0.95rem, 3.8vw, 1.2rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .history-ticket {
@@ -1533,18 +1585,24 @@ textarea:focus {
   margin: 4px 0;
 }
 
-.admin-compact .admin-ticket-row {
-  margin: 2px 0 6px;
+.admin-compact .admin-ticket-box {
+  min-width: 3.75rem;
+  padding: 8px 12px;
+  border-radius: 12px;
 }
 
 .admin-compact .admin-ticket-number {
-  font-size: clamp(2.5rem, 12vw, 3.75rem);
+  font-size: clamp(2.4rem, 11vw, 3.5rem);
 }
 
-.admin-compact .admin-price {
-  font-size: clamp(1.15rem, 4.5vw, 1.5rem);
+.admin-compact .admin-detail-header .admin-price {
+  font-size: clamp(1.05rem, 4vw, 1.35rem);
   font-weight: 900;
   color: #0f172a;
+}
+
+.admin-compact .admin-detail-id {
+  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
 }
 
 .admin-compact .admin-gps-box {

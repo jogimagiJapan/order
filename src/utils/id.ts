@@ -46,3 +46,17 @@ export function formatDisplayId(id: string): string {
     const { time, username } = parseDisplayId(id);
     return username ? `${time}_${username}` : time;
 }
+
+/**
+ * Admin detail ID: mmdd_hhmmss_username
+ * Example: "20261108_153501_takaaki" → "1108_153501_takaaki"
+ */
+export function formatShortDisplayId(id: string): string {
+    const parts = String(id || "").split("_");
+    if (parts.length >= 3 && /^\d{8}$/.test(parts[0]) && /^\d{6}$/.test(parts[1])) {
+        const mmdd = parts[0].slice(4);
+        const username = parts.slice(2).join("_");
+        return username ? `${mmdd}_${parts[1]}_${username}` : `${mmdd}_${parts[1]}`;
+    }
+    return formatDisplayId(id);
+}
