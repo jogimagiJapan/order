@@ -71,11 +71,27 @@ const DEFAULT_THREAD_COLORS = [
 
 // 備考 = 表示する PNG の種類（{ID}_{種類}.png）。空欄のプランはレビュー画像を出さない
 const DEFAULT_PLAN_REVIEWS = [
-  ["PlanReview", "Lite", 0, "wave1", ""],
-  ["PlanReview", "Limited", 0, "", ""],
-  ["PlanReview", "Std Wave", 0, "review1", ""],
-  ["PlanReview", "Std Circle", 0, "review2", ""]
+  ["PlanReview", "LITE", 0, "wave1", ""],
+  ["PlanReview", "LIMITED", 0, "", ""],
+  ["PlanReview", "WAVE", 0, "review1", ""],
+  ["PlanReview", "CIRCLE", 0, "review2", ""]
 ];
+
+// 旧表記（Lite / Std Wave など）を現在のプラン名へ揃える
+const PLAN_ALIASES = {
+  lite: "LITE",
+  limited: "LIMITED",
+  wave: "WAVE",
+  stdwave: "WAVE",
+  circle: "CIRCLE",
+  stdcircle: "CIRCLE"
+};
+
+function normalizePlanName(value) {
+  const raw = String(value === null || value === undefined ? "" : value).trim();
+  const key = raw.toLowerCase().replace(/[\s_-]/g, "");
+  return PLAN_ALIASES[key] || raw;
+}
 const PNG_FOLDER_CONFIG_NAME = "PNGフォルダ";
 const ORDER_SEARCH_LIMIT = 30;
 
@@ -307,7 +323,11 @@ function migrateMasterData(masterSheet) {
       hasPngFolder = true;
     }
     if (category === "PlanReview") {
-      planReviewNames[String(name)] = true;
+      const normalized = normalizePlanName(name);
+      if (normalized !== String(name) && !planReviewNames[normalized]) {
+        masterSheet.getRange(i + 1, 2).setValue(normalized);
+      }
+      planReviewNames[normalized] = true;
     }
   }
 
@@ -573,7 +593,7 @@ function readSubmissions(ss, matchId, limit) {
     return {
       timestamp: cell(row, "タイムスタンプ", row[0]),
       selectedId: selectedId,
-      plan: cell(row, "プラン", row[2]),
+      plan: normalizePlanName(cell(row, "プラン", row[2])),
       option: cell(row, "オプション", row[3]),
       item: cell(row, "アイテム", row[4]),
       itemColor: cell(row, "アイテムカラー", row[5]),
@@ -628,7 +648,7 @@ function extractDriveFolderId(value) {
  */
 function getReviewImage(rawId, rawPlan) {
   const id = String(rawId || "").trim().replace(/\.(wav|png)$/i, "");
-  const plan = String(rawPlan || "").trim();
+  const plan = normalizePlanName(rawPlan);
   if (!id || /[\/\\]/.test(id)) {
     return jsonResponse({ found: false, reason: "invalidId" });
   }
@@ -638,7 +658,7 @@ function getReviewImage(rawId, rawPlan) {
   let suffix = "";
   let folderValue = "";
   masterValues.slice(1).forEach(row => {
-    if (row[0] === "PlanReview" && String(row[1]).trim() === plan) {
+    if (row[0] === "PlanReview" && normalizePlanName(row[1]) === plan) {
       suffix = String(row[3] || "").trim();
     }
     if (row[0] === "Config" && row[1] === PNG_FOLDER_CONFIG_NAME) {
@@ -754,7 +774,10 @@ function doGet(e) {
     if (category === "Shipping") master.shipping.push(item);
     if (category === "ThreadColor") master.threads.push(item);
     if (category === "GpsConfig") master.gpsConfig.push(item);
-    if (category === "PlanReview") master.planReview.push(item);
+    if (category === "PlanReview") {
+      item.name = normalizePlanName(item.name);
+      master.planReview.push(item);
+    }
   });
   
   // Get latest 10 submissions for admin dashboard
@@ -782,6 +805,7 @@ function doPost(e) {
     const sheet = ss.getSheetByName(SUBMISSION_SHEET_NAME);
     
     const data = JSON.parse(e.postData.contents);
+    data.plan = normalizePlanName(data.plan);
     const timestamp = new Date();
     
     const deliveryMethod = data.deliveryMethod === "配送" ? "配送" : "当日渡し";

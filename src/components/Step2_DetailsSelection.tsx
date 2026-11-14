@@ -18,6 +18,8 @@ import {
     formatGpsDatetimeFromId,
     sanitizeGpsText,
 } from "@/utils/gps";
+import { PLANS, threadLimitFor } from "@/utils/plan";
+import { SectionTitle, StepHeader } from "./FormHeadings";
 import { useEffect, useRef } from "react";
 
 export default function Step2_DetailsSelection({
@@ -70,12 +72,11 @@ export default function Step2_DetailsSelection({
         }
     }, [colorReady, colorOtherReady, order.itemSize, sizeOtherReady, order.threads]);
 
-    const plans: { id: Plan; label: string; price: string }[] = [
-        { id: "Lite", label: "Lite", price: "¥2,000" },
-        { id: "Limited", label: "Limited", price: "¥2,000" },
-        { id: "Std Wave", label: "Std Wave", price: "¥4,000" },
-        { id: "Std Circle", label: "Std Circle", price: "¥4,000" },
-    ];
+    const plans: { id: Plan; label: string; price: string }[] = PLANS.map(p => ({
+        id: p.id,
+        label: p.id,
+        price: `¥${p.price.toLocaleString()}`,
+    }));
 
     const options: { id: PlanOption; label: string; price: string }[] = [
         { id: "GPS日時", label: "GPS日時", price: `+¥${GPS_OPTION_PRICE.toLocaleString()}` },
@@ -135,7 +136,7 @@ export default function Step2_DetailsSelection({
     };
 
     const handleThreadToggle = (id: string, index?: number) => {
-        const count = order.plan === "Lite" ? 1 : 3;
+        const count = threadLimitFor(order.plan);
         const newThreads = [...order.threads];
 
         while (newThreads.length < count) newThreads.push("");
@@ -146,9 +147,13 @@ export default function Step2_DetailsSelection({
         }
     };
 
-    const threadCount = order.plan === "Lite" ? 1 : 3;
+    const threadCount = threadLimitFor(order.plan);
     const threadsReady =
         order.threads.length === threadCount && order.threads.every(t => t !== "");
+
+    useEffect(() => {
+        if (threadsReady) scrollTo(soundCardRef);
+    }, [threadsReady]);
 
     let activeSection = 0;
     if (!order.plan) activeSection = 1;
@@ -159,22 +164,24 @@ export default function Step2_DetailsSelection({
     else if (!threadsReady) activeSection = 6;
     else activeSection = 7;
 
-    return (
-        <div className="animate-fade-in pb-20 px-1">
-            <header className="mb-10 text-center">
-                <h2 className="text-2xl mb-2 mt-6">02. Customize</h2>
-                <p className="text-sub">デザインと詳細を選択してください</p>
-            </header>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 1 ? "focused-section" : ""}`} ref={plansRef}>
-                <h3 className="section-title">02-1. SELECT PLAN</h3>
+    const sectionClass = (n: number) => `form-section ${activeSection === n ? "focused-section" : ""}`;
+    let sectionNum = 0;
+    const nextNum = () => ++sectionNum;
+
+    return (
+        <div className="animate-fade-in">
+            <StepHeader index="02" title="Customize" lead="デザインと詳細を選択してください" />
+
+            <section className={sectionClass(1)} ref={plansRef}>
+                <SectionTitle num={nextNum()} label="プラン" en="Plan" />
                 <div className="grid grid-2">
                     {plans.map((p) => (
                         <div
                             key={p.id}
                             className={`tile ${order.plan === p.id ? "active" : ""}`}
                             onClick={() => {
-                                const limit = p.id === "Lite" ? 1 : 3;
+                                const limit = threadLimitFor(p.id);
                                 const newThreads = order.threads.slice(0, limit);
                                 while (newThreads.length < limit) newThreads.push("");
                                 onUpdate({
@@ -186,19 +193,19 @@ export default function Step2_DetailsSelection({
                                 });
                             }}
                         >
-                            <span className="text-xs font-bold tracking-widest">{p.label}</span>
-                            <span className="text-[10px] mt-1 opacity-60">{p.price}</span>
+                            <span className="tile-title tile-plan">{p.label}</span>
+                            <span className="tile-price">{p.price}</span>
                         </div>
                     ))}
                 </div>
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 2 ? "focused-section" : ""}`} ref={optionRef}>
-                <h3 className="section-title">02-2. OPTION</h3>
+            <section className={sectionClass(2)} ref={optionRef}>
+                <SectionTitle num={nextNum()} label="オプション" en="Option" />
                 <div className="grid grid-2">
                     {!order.plan ? (
-                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                            <span className="text-[10px] italic">Select plan first</span>
+                        <div className="tile is-disabled">
+                            <span className="tile-note">先にプランを選んでください</span>
                         </div>
                     ) : options.map((o) => (
                         <div
@@ -206,29 +213,35 @@ export default function Step2_DetailsSelection({
                             className={`tile ${order.option === o.id ? "active" : ""}`}
                             onClick={() => applyGpsOption(o.id)}
                         >
-                            <span className="text-sm font-bold">{o.label}</span>
-                            <span className="text-[10px] mt-1 opacity-60">{o.price}</span>
+                            <span className="tile-title">{o.label}</span>
+                            <span className="tile-price">{o.price}</span>
                         </div>
                     ))}
                 </div>
                 {gpsSelected && (
-                    <div className="gps-fields mt-4">
+                    <div className="gps-fields">
                         <label className="gps-field">
-                            <span className="gps-field-label">日時（最大{GPS_TEXT_MAX}文字）</span>
+                            <span className="gps-field-label">
+                                日時
+                                <small>最大{GPS_TEXT_MAX}文字</small>
+                            </span>
                             <input
-                                className="other-input"
+                                className="gps-input"
                                 type="text"
                                 inputMode="text"
                                 maxLength={GPS_TEXT_MAX}
-                                placeholder="2026.03.19_00.56.08"
+                                placeholder="2026.03.19 00:56:08"
                                 value={order.gpsDatetime}
                                 onChange={(e) => onUpdate({ gpsDatetime: sanitizeGpsText(e.target.value) })}
                             />
                         </label>
                         <label className="gps-field">
-                            <span className="gps-field-label">緯度経度（最大{GPS_TEXT_MAX}文字）</span>
+                            <span className="gps-field-label">
+                                緯度経度
+                                <small>最大{GPS_TEXT_MAX}文字</small>
+                            </span>
                             <input
-                                className="other-input"
+                                className="gps-input"
                                 type="text"
                                 inputMode="text"
                                 maxLength={GPS_TEXT_MAX}
@@ -237,13 +250,13 @@ export default function Step2_DetailsSelection({
                                 onChange={(e) => onUpdate({ gpsLocation: sanitizeGpsText(e.target.value) })}
                             />
                         </label>
-                        <p className="gps-hint">使用可能: 英数字 . , - _</p>
+                        <p className="gps-hint">使用可能: 英数字 . , - : スペース</p>
                     </div>
                 )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 3 ? "focused-section" : ""}`} ref={itemsRef}>
-                <h3 className="section-title">02-3. SELECT ITEM</h3>
+            <section className={sectionClass(3)} ref={itemsRef}>
+                <SectionTitle num={nextNum()} label="アイテム" en="Item" />
                 <div className="grid grid-2">
                     {masterData.items.map((item) => (
                         <div
@@ -259,21 +272,21 @@ export default function Step2_DetailsSelection({
                                 });
                             }}
                         >
-                            <span className="text-sm font-bold">{item.name}</span>
-                            <span className="text-[10px] mt-1 opacity-60">+¥{item.price.toLocaleString()}</span>
-                            {masterData.items.length === 1 && <span className="badge">Auto-Selected</span>}
+                            <span className="tile-title">{item.name}</span>
+                            <span className="tile-price">+¥{item.price.toLocaleString()}</span>
+                            {masterData.items.length === 1 && <span className="badge">自動選択</span>}
                         </div>
                     ))}
                 </div>
             </section>
 
             {!bringIn && (
-                <section className={`mb-16 transition-all duration-500 ${activeSection === 4 ? "focused-section" : ""}`} ref={colorRef}>
-                    <h3 className="section-title">02-4. COLOR</h3>
+                <section className={sectionClass(4)} ref={colorRef}>
+                    <SectionTitle num={nextNum()} label="カラー" en="Color" />
                     <div className="grid grid-2">
                         {!order.item ? (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">Select item first</span>
+                            <div className="tile is-disabled">
+                                <span className="tile-note">先にアイテムを選んでください</span>
                             </div>
                         ) : filteredColors.length > 0 ? (
                             filteredColors.map((c) => (
@@ -285,19 +298,19 @@ export default function Step2_DetailsSelection({
                                         itemColorOther: c.name === OTHER_OPTION ? order.itemColorOther : "",
                                     })}
                                 >
-                                    <span className="text-sm font-bold">{c.name}</span>
-                                    {filteredColors.length === 1 && <span className="badge">Auto-Selected</span>}
+                                    <span className="tile-title">{c.name}</span>
+                                    {filteredColors.length === 1 && <span className="badge">自動選択</span>}
                                 </div>
                             ))
                         ) : (
-                            <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                                <span className="text-[10px] italic">No colors</span>
+                            <div className="tile is-disabled">
+                                <span className="tile-note">選べるカラーがありません</span>
                             </div>
                         )}
                     </div>
                     {order.itemColor === OTHER_OPTION && (
                         <input
-                            className="other-input mt-4"
+                            className="other-input"
                             type="text"
                             placeholder="カラーを入力してください"
                             value={order.itemColorOther}
@@ -307,12 +320,12 @@ export default function Step2_DetailsSelection({
                 </section>
             )}
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 5 ? "focused-section" : ""}`} ref={sizeRef}>
-                <h3 className="section-title">{bringIn ? "02-4. SIZE" : "02-5. SIZE"}</h3>
+            <section className={sectionClass(5)} ref={sizeRef}>
+                <SectionTitle num={nextNum()} label="サイズ" en="Size" />
                 <div className="grid grid-2">
                     {!order.item ? (
-                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                            <span className="text-[10px] italic">Select item first</span>
+                        <div className="tile is-disabled">
+                            <span className="tile-note">先にアイテムを選んでください</span>
                         </div>
                     ) : filteredSizes.length > 0 ? (
                         filteredSizes.map((s) => (
@@ -324,19 +337,19 @@ export default function Step2_DetailsSelection({
                                     itemSizeOther: s.name === OTHER_OPTION ? order.itemSizeOther : "",
                                 })}
                             >
-                                <span className="text-sm font-bold">{s.name}</span>
-                                {filteredSizes.length === 1 && <span className="badge">Auto-Selected</span>}
+                                <span className="tile-title">{s.name}</span>
+                                {filteredSizes.length === 1 && <span className="badge">自動選択</span>}
                             </div>
                         ))
                     ) : (
-                        <div className="tile opacity-30 cursor-not-allowed border-none shadow-none">
-                            <span className="text-[10px] italic">No sizes</span>
+                        <div className="tile is-disabled">
+                            <span className="tile-note">選べるサイズがありません</span>
                         </div>
                     )}
                 </div>
                 {order.itemSize === OTHER_OPTION && (
                     <input
-                        className="other-input mt-4"
+                        className="other-input"
                         type="text"
                         placeholder="サイズを入力してください"
                         value={order.itemSizeOther}
@@ -345,8 +358,8 @@ export default function Step2_DetailsSelection({
                 )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 6 ? "focused-section" : ""}`} ref={threadsRef}>
-                <h3 className="section-title">{bringIn ? "02-5. THREAD COLORS" : "02-6. THREAD COLORS"}</h3>
+            <section className={sectionClass(6)} ref={threadsRef}>
+                <SectionTitle num={nextNum()} label="糸の色" en="Thread Colors" />
                 {order.plan ? (
                     <ThreadSelector
                         limit={threadCount}
@@ -355,18 +368,18 @@ export default function Step2_DetailsSelection({
                         onToggle={handleThreadToggle}
                     />
                 ) : (
-                    <div className="thread-card text-center py-10">
-                        <p className="text-sm text-sub italic">Please select a plan first to choose threads.</p>
+                    <div className="tile is-disabled">
+                        <span className="tile-note">先にプランを選んでください</span>
                     </div>
                 )}
             </section>
 
-            <section className={`mb-16 transition-all duration-500 ${activeSection === 7 ? "focused-section" : ""}`} ref={soundCardRef}>
-                <h3 className="section-title">{bringIn ? "02-6. SOUND CARD (OPTIONAL)" : "02-7. SOUND CARD (OPTIONAL)"}</h3>
-                <div className="sound-card-row">
+            <section className={sectionClass(7)} ref={soundCardRef}>
+                <SectionTitle num={nextNum()} label="音が聴けるカード" en="Sound Card" optional />
+                <div className={`sound-card-row ${order.soundCardQty > 0 ? "is-on" : ""}`}>
                     <div className="sound-card-info">
-                        <span className="text-sm font-bold">音が聴けるカード</span>
-                        <span className="text-[10px] opacity-60">+¥{SOUND_CARD_UNIT_PRICE.toLocaleString()} / 枚</span>
+                        <span className="tile-title">音が聴けるカード</span>
+                        <span className="tile-price">+¥{SOUND_CARD_UNIT_PRICE.toLocaleString()} / 枚</span>
                     </div>
                     <div className="qty-stepper">
                         <button
@@ -394,10 +407,10 @@ export default function Step2_DetailsSelection({
                 </div>
             </section>
 
-            <section ref={remarksRef}>
-                <h3 className="section-title">{bringIn ? "02-7. REMARKS (OPTIONAL)" : "02-8. REMARKS (OPTIONAL)"}</h3>
+            <section className="form-section" ref={remarksRef}>
+                <SectionTitle num={nextNum()} label="備考" en="Remarks" optional />
                 <textarea
-                    className="w-full min-h-[120px] resize-none text-sm"
+                    className="form-textarea"
                     placeholder="ご要望や特記事項があればご記入ください"
                     value={order.notes}
                     onChange={(e) => onUpdate({ notes: e.target.value })}

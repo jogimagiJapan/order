@@ -15,11 +15,15 @@ import Step3_Delivery from "@/components/Step3_Delivery";
 import Step4_Preview from "@/components/Step4_Preview";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { isShippingComplete } from "@/utils/shipping";
+import { threadLimitFor } from "@/utils/plan";
+import BrandTitle from "@/components/BrandTitle";
+
+const STEP_LABELS = ["ID", "カスタマイズ", "お渡し", "確認"];
 
 // Exported default wraps inner component in Suspense to satisfy Next.js prerender requirements for useSearchParams
 export default function OrderPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold tracking-widest text-sub">LOADING...</div>}>
+    <Suspense fallback={<div className="order-app order-loading"><span className="order-loading-text">読み込み中...</span></div>}>
       <OrderPageInner />
     </Suspense>
   );
@@ -121,7 +125,7 @@ function OrderPageInner() {
     }
   };
 
-  const threadLimit = order.plan === "Lite" ? 1 : 3;
+  const threadLimit = threadLimitFor(order.plan);
   const colorOk = isBringInItem(order.item)
     ? true
     : !!order.itemColor &&
@@ -150,48 +154,51 @@ function OrderPageInner() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center font-bold tracking-widest text-sub">
-        LOADING...
+      <div className="order-app order-loading">
+        <BrandTitle />
+        <span className="order-loading-text">読み込み中...</span>
       </div>
     );
   }
 
   if (isSuccess) {
     return (
-      <div className="success-screen">
+      <div className="order-app success-screen">
         <div className="success-card">
-          <div className="success-icon-container shadow-inner">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold">
+          <div className="success-icon-container">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          
-          <h1 className="text-3xl font-black tracking-[0.2em] mb-4 text-text-main">THANK YOU</h1>
+
+          <h1 className="success-title">Thank you</h1>
 
           {ticketNumber && (
-            <div className="ticket-success-number mb-4" aria-label={`整理番号 ${ticketNumber}`}>
-              {ticketNumber}
+            <div className="ticket-success-block">
+              <span className="ticket-success-label">整理番号</span>
+              <div className="ticket-success-number" aria-label={`整理番号 ${ticketNumber}`}>
+                {ticketNumber}
+              </div>
             </div>
           )}
-          
-          <div className="w-12 h-0.5 bg-accent-gold/30 mx-auto mb-6"></div>
-          
-          <p className="text-sub mb-10 leading-relaxed font-medium">
+
+          <p className="success-text">
             ご注文を承りました。<br />
             {ticketNumber ? <>整理番号は <strong>{ticketNumber}</strong> です。<br /></> : null}
             仕上がりまで、どうぞ楽しみにお待ちください。
           </p>
 
-          <div className="space-y-4">
+          <div className="success-actions">
             <button
-              className="finalize-btn w-full"
-              style={{ backgroundColor: "#c06c84", boxShadow: '0 10px 20px rgba(192, 108, 132, 0.2)' }}
+              type="button"
+              className="btn-primary"
               onClick={() => window.location.href = "https://sts-process-visualization.jogimagi.com/"}
             >
               音の刺繍について
             </button>
             
             <button
+              type="button"
               className="btn-home"
               onClick={() => window.location.reload()}
             >
@@ -199,7 +206,7 @@ function OrderPageInner() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
-              HOME
+              ホームへ
             </button>
           </div>
         </div>
@@ -208,20 +215,24 @@ function OrderPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-base-bg">
+    <div className="order-app">
       <div className={`container ${step === 4 ? "container-wide" : ""}`}>
-        <header className={`text-center pt-8 ${step === 1 ? "mb-12" : "mb-4"}`}>
-          {step === 1 && (
-            <h1 className="text-2xl font-black tracking-[0.2em] text-text-main">SEW THE SOUND</h1>
-          )}
-          <div className={`flex justify-center gap-3 ${step === 1 ? "mt-6" : ""}`}>
-            {[1, 2, 3, 4].map((s) => (
-              <div
-                key={s}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${step === s ? "bg-accent-gold w-8" : step > s ? "bg-text-main" : "bg-border"}`}
-              />
-            ))}
-          </div>
+        <header className={`order-header ${step === 1 ? "is-hero" : ""}`}>
+          <BrandTitle compact={step !== 1} />
+          <ol className="order-progress" aria-label={`ステップ ${step} / 4`}>
+            {STEP_LABELS.map((label, i) => {
+              const s = i + 1;
+              return (
+                <li
+                  key={label}
+                  className={`order-progress-step ${step === s ? "is-current" : step > s ? "is-done" : ""}`}
+                >
+                  <span className="order-progress-bar" />
+                  <span className="order-progress-label">{label}</span>
+                </li>
+              );
+            })}
+          </ol>
         </header>
 
         <main>
@@ -277,7 +288,7 @@ function OrderPageInner() {
               }}
               disabled={isSubmitting}
             >
-              <span>←</span> BACK
+              <span aria-hidden="true">←</span> 戻る
             </button>
 
             {step === 2 && (
@@ -286,7 +297,7 @@ function OrderPageInner() {
                 disabled={!isStep2Valid}
                 onClick={nextStep}
               >
-                CONTINUE <span>→</span>
+                次へ <span aria-hidden="true">→</span>
               </button>
             )}
 
@@ -296,19 +307,18 @@ function OrderPageInner() {
                 disabled={!isStep3Valid}
                 onClick={nextStep}
               >
-                CONTINUE <span>→</span>
+                次へ <span aria-hidden="true">→</span>
               </button>
             )}
 
             {step === 4 && (
               <button
-                className="btn-nav btn-continue"
+                className="btn-nav btn-continue btn-staff"
                 disabled={isSubmitting}
                 onClick={() => {
                   setStaffModalStep(isStaffConfirmed ? (ticketNumber ? "review" : "pick") : "confirm");
                   setShowStaffConfirmation(true);
                 }}
-                style={{ backgroundColor: '#c06c84', minWidth: '180px' }}
               >
                 {isSubmitting ? "送信中..." : "スタッフ確認へ →"}
               </button>

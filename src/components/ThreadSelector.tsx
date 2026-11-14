@@ -22,6 +22,8 @@ export default function ThreadSelector({
         }
     }, [limit, activeIndex]);
 
+    const filledCount = selected.filter(s => s).length;
+
     const handlePaletteClick = (colorId: string) => {
         onToggle(colorId, activeIndex);
         if (limit > 1) {
@@ -30,14 +32,14 @@ export default function ThreadSelector({
     };
 
     return (
-        <div className="py-6">
-            <div className="flex justify-between items-center mb-6 px-2">
-                <span className="text-[10px] font-black tracking-widest text-sub uppercase">Color Palette</span>
-                <span className="text-[10px] font-bold text-accent-gold uppercase tracking-widest">{selected.filter(s => s).length} / {limit} Selected</span>
+        <div className="thread-selector">
+            <div className="thread-palette-head">
+                <span className="thread-palette-label">パレットから色を選択</span>
+                <span className={`thread-count ${filledCount === limit ? "is-complete" : ""}`}>{filledCount} / {limit}</span>
             </div>
 
             {colors.length > 0 ? (
-                <div className="thread-grid mb-10">
+                <div className="thread-grid">
                     {colors.map((color) => (
                         <div key={color.id} className="chip-container">
                             <div
@@ -45,15 +47,13 @@ export default function ThreadSelector({
                                 style={{ backgroundColor: color.hex }}
                                 onClick={() => handlePaletteClick(color.id)}
                             />
-                            <span className="text-[10px] font-black mt-2 text-sub">
-                                {color.id}
-                            </span>
+                            <span className="chip-id">{color.id}</span>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="thread-card text-center py-8 mb-10">
-                    <p className="text-sm text-sub italic">表示可能な糸色がありません（マスタを確認してください）</p>
+                <div className="tile is-disabled">
+                    <span className="tile-note">表示可能な糸色がありません（マスタを確認してください）</span>
                 </div>
             )}
 
@@ -70,7 +70,7 @@ export default function ThreadSelector({
                             onClick={() => setActiveIndex(i)}
                         >
                             <span className="slot-label text-center">
-                                {colorObj ? colorObj.name : `Thread ${i + 1}`}
+                                {colorObj ? colorObj.name : `糸 ${i + 1}`}
                             </span>
                             {colorId ? (
                                 <div className="flex flex-col items-center gap-1 animate-fade-in w-full">
@@ -87,7 +87,7 @@ export default function ThreadSelector({
                 })}
             </div>
 
-            <p className="text-[9px] text-sub text-center mt-8 font-bold uppercase tracking-widest opacity-60">
+            <p className="thread-help">
                 タップしてスロットを選択し、上の色を選んでください
             </p>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { resolveThreadColor } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { formatShortDisplayId, parseDisplayId } from "@/utils/id";
+import { formatPlan, threadLimitFor } from "@/utils/plan";
 
 interface DeliveryInfo {
     zip: string;
@@ -57,10 +58,10 @@ const SEARCH_LIMIT = 30;
 
 /** GAS 未反映時でも Admin で同じ対応表を使う（マスタがあれば上書き） */
 const DEFAULT_PLAN_REVIEW: Record<string, string> = {
-    Lite: "wave1",
-    Limited: "",
-    "Std Wave": "review1",
-    "Std Circle": "review2",
+    LITE: "wave1",
+    LIMITED: "",
+    WAVE: "review1",
+    CIRCLE: "review2",
 };
 
 const reviewImageCache = new Map<string, ReviewImageResult>();
@@ -95,7 +96,7 @@ export default function AdminDashboard() {
             setSubmissions(next);
             const reviewMap: Record<string, string> = { ...DEFAULT_PLAN_REVIEW };
             (data.masterData?.planReview || []).forEach((row: MasterItem) => {
-                reviewMap[String(row.name).trim()] = String(row.note || "").trim();
+                reviewMap[formatPlan(String(row.name).trim())] = String(row.note || "").trim();
             });
             setPlanReview(reviewMap);
             // 詳細は自動で切り替えない。未選択時だけ先頭を選ぶ
@@ -184,7 +185,7 @@ export default function AdminDashboard() {
                         <OrderDetail
                             current={selectedOrder}
                             getThreadColor={getThreadColor}
-                            reviewType={planReview[String(selectedOrder.plan).trim()] || ""}
+                            reviewType={planReview[formatPlan(selectedOrder.plan)] || ""}
                         />
                     )}
 
@@ -262,7 +263,7 @@ export default function AdminDashboard() {
                                             <span className="history-user">
                                                 {subDisplayId.username || "—"}
                                             </span>
-                                            <span className="history-plan">{sub.plan}</span>
+                                            <span className="history-plan">{formatPlan(sub.plan)}</span>
                                             <span className="history-price">
                                                 ¥{Number(sub.totalPrice || 0).toLocaleString()}
                                             </span>
@@ -347,7 +348,7 @@ function OrderDetail({
             <div className="admin-info-grid mb-4">
                 <div className="admin-grid-2">
                     <div className="admin-grid-val">
-                        <p className="value">{current.plan}</p>
+                        <p className="value">{formatPlan(current.plan)}</p>
                         <p className="label-small">Plan</p>
                     </div>
                     <div className={`admin-grid-val ${hasGps ? "is-emphasis" : "is-muted"}`}>
@@ -401,7 +402,7 @@ function OrderDetail({
                 <div className="thread-preview-grid">
                     {[current.thread1, current.thread2, current.thread3].map((tid, i) => {
                         const color = getThreadColor(tid);
-                        if (!tid || (current.plan === "Lite" && i > 0)) return null;
+                        if (!tid || i >= threadLimitFor(current.plan)) return null;
                         return (
                             <div key={i} className="thread-preview-item">
                                 <div

@@ -9,6 +9,7 @@ import {
 import { resolveThreadColor } from "@/constants/colors";
 import { normalizeZip } from "@/utils/shipping";
 import { GPS_OPTION_PRICE } from "@/utils/gps";
+import { StepHeader } from "./FormHeadings";
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
     return (
@@ -50,10 +51,9 @@ export default function Step4_Preview({
     };
 
     return (
-        <div className="animate-fade-in pb-10">
-            <header className="mb-8 text-center">
-                <h2 className="mb-1">04. Review</h2>
-                <p className="text-sub">ご注文内容の最終確認</p>
+        <div className="animate-fade-in">
+            <StepHeader index="04" title="Review" lead="ご注文内容の最終確認" />
+            <div className="review-status">
                 {!staffConfirmed ? (
                     <p className="review-pending-note">
                         まだ確定されていません。下の「スタッフ確認へ」を押したあと、スタッフに端末を渡してください。
@@ -64,33 +64,31 @@ export default function Step4_Preview({
                         {ticketNumber ? `（選択中: ${ticketNumber}）` : ""}。
                     </p>
                 )}
-            </header>
+            </div>
 
-            <div className="grid gap-8 preview-grid-pc">
-                <div className="thread-card shadow-sm review-left">
-                    <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-4 border-b border-border pb-3 uppercase">
-                        Order Details
-                    </h3>
+            <div className="grid preview-grid-pc">
+                <div className="thread-card review-left">
+                    <h3 className="card-title">ご注文内容<span>Order Details</span></h3>
                     <div className="summary-list">
                         <SummaryRow label="ID" value={order.selectedId} />
-                        <SummaryRow label="PLAN" value={order.plan || "-"} />
-                        <SummaryRow label="OPTION" value={optionValue} />
+                        <SummaryRow label="プラン" value={order.plan || "-"} />
+                        <SummaryRow label="オプション" value={optionValue} />
                         {order.option === "GPS日時" && (
                             <>
-                                <SummaryRow label="GPS TIME" value={order.gpsDatetime || "-"} />
-                                <SummaryRow label="GPS LOC" value={order.gpsLocation || "-"} />
+                                <SummaryRow label="GPS 日時" value={order.gpsDatetime || "-"} />
+                                <SummaryRow label="GPS 緯度経度" value={order.gpsLocation || "-"} />
                             </>
                         )}
-                        <SummaryRow label="ITEM" value={order.item || "-"} />
-                        <SummaryRow label="COLOR" value={displayColor} />
-                        <SummaryRow label="SIZE" value={displaySize} />
-                        <SummaryRow label="SOUND CARD" value={soundCardValue} />
-                        <SummaryRow label="RECEIVE" value={isShipping ? "後日配送" : "本日お渡し"} />
+                        <SummaryRow label="アイテム" value={order.item || "-"} />
+                        <SummaryRow label="カラー" value={displayColor} />
+                        <SummaryRow label="サイズ" value={displaySize} />
+                        <SummaryRow label="音が聴けるカード" value={soundCardValue} />
+                        <SummaryRow label="お受け取り" value={isShipping ? "後日配送" : "本日お渡し"} />
                     </div>
 
                     {isShipping && (
                         <div className="review-shipping">
-                            <h4 className="review-shipping-title">Shipping To</h4>
+                            <h4 className="review-shipping-title">お届け先</h4>
                             <p className="review-shipping-line">{formatZip(order.shipping.zip)}</p>
                             <p className="review-shipping-line">{order.shipping.address}</p>
                             {order.shipping.building && (
@@ -103,10 +101,8 @@ export default function Step4_Preview({
                     )}
                 </div>
 
-                <div className="thread-card shadow-sm review-right-top">
-                    <h3 className="text-[10px] font-black tracking-widest text-accent-gold mb-6 border-b border-border pb-3 uppercase">
-                        Thread Selection
-                    </h3>
+                <div className="thread-card review-right-top">
+                    <h3 className="card-title">糸の色<span>Threads</span></h3>
                     <div className="thread-preview-grid">
                         {order.threads.map((tid, i) => {
                             const color = getThreadColor(tid);
@@ -125,13 +121,11 @@ export default function Step4_Preview({
                     </div>
                 </div>
 
-                <div className="thread-card shadow-sm review-right-bottom">
+                <div className="thread-card review-right-bottom">
                     {order.notes && (
-                        <div className="mb-6 px-1">
-                            <h3 className="text-[9px] font-black tracking-widest text-accent-gold mb-2 uppercase">Remarks</h3>
-                            <p className="text-xs text-text-main/80 italic leading-relaxed border-l-2 border-border pl-3">
-                                {order.notes}
-                            </p>
+                        <div className="review-remarks">
+                            <h3 className="card-title">備考<span>Remarks</span></h3>
+                            <p className="review-remarks-text">{order.notes}</p>
                         </div>
                     )}
 
@@ -150,7 +144,7 @@ export default function Step4_Preview({
 
                     <div className="total-section">
                         <div className="total-label-block">
-                            <span className="total-label">Total</span>
+                            <span className="total-label">合計</span>
                             <span className="total-tax">税込</span>
                         </div>
                         <span className="total-amount">¥{order.totalPrice.toLocaleString()}</span>

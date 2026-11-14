@@ -10,6 +10,7 @@ import {
     isValidZip,
     normalizeZip,
 } from "@/utils/shipping";
+import { SectionTitle, StepHeader } from "./FormHeadings";
 
 interface FieldConfig {
     key: keyof ShippingInfo;
@@ -204,13 +205,10 @@ export default function Step3_Delivery({
 
     return (
         <div className="animate-fade-in step-delivery">
-            <header className="mb-10 text-center">
-                <h2 className="mb-2">03. Delivery</h2>
-                <p className="text-sub">お渡し方法を選択してください</p>
-            </header>
+            <StepHeader index="03" title="Delivery" lead="お渡し方法を選択してください" />
 
-            <section className={`mb-16 ${!order.deliveryMethod ? "focused-section" : ""}`}>
-                <h3 className="section-title">03-1. RECEIVE METHOD</h3>
+            <section className={`form-section ${!order.deliveryMethod ? "focused-section" : ""}`}>
+                <SectionTitle num={1} label="お受け取り方法" en="Receive" />
                 <div className="grid grid-2">
                     <div
                         className={`tile ${order.deliveryMethod === "pickup" ? "active" : ""}`}
@@ -230,8 +228,8 @@ export default function Step3_Delivery({
             </section>
 
             {isShipping && (
-                <section className="mb-16" ref={formRef}>
-                    <h3 className="section-title">03-2. SHIPPING ADDRESS</h3>
+                <section className="form-section" ref={formRef}>
+                    <SectionTitle num={2} label="お届け先" en="Shipping" />
 
                     <div className="ship-form">
                         {visibleFields.map((field) => (

@@ -4,17 +4,15 @@ import { useState, useEffect } from "react";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { resolveShippingFee } from "@/utils/shipping";
 import { GPS_OPTION_PRICE } from "@/utils/gps";
+import { Plan, planPrice } from "@/utils/plan";
 
-export type Plan = "Lite" | "Limited" | "Std Wave" | "Std Circle";
+export type { Plan };
 export type PlanOption = "GPS日時" | "なし";
 export type DeliveryMethod = "pickup" | "shipping";
 
 export const OTHER_OPTION = "その他";
 export const SOUND_CARD_UNIT_PRICE = 500;
 export const SOUND_CARD_MAX_QTY = 10;
-
-export const isStdPlan = (plan: Plan | null): boolean =>
-    plan === "Std Wave" || plan === "Std Circle";
 
 export const isBringInItem = (item: string): boolean => item === "持ち込み";
 
@@ -99,10 +97,7 @@ function calcOrderTotal(
     order: OrderState,
     items: MasterDataItem[],
 ): number {
-    let total = 0;
-    if (order.plan === "Lite" || order.plan === "Limited") total = 2000;
-    else if (isStdPlan(order.plan)) total = 4000;
-
+    const total = planPrice(order.plan);
     const itemPrice = items.find(i => i.name === order.item)?.price || 0;
     const cardPrice = (order.soundCardQty || 0) * SOUND_CARD_UNIT_PRICE;
     const gpsPrice = order.option === "GPS日時" ? GPS_OPTION_PRICE : 0;
