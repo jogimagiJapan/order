@@ -1139,9 +1139,10 @@ textarea:focus {
   justify-self: center;
   text-align: center;
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
+  letter-spacing: -0.01em;
 }
 
 .admin-detail-header .admin-price {
@@ -1149,10 +1150,10 @@ textarea:focus {
   grid-row: 1;
   justify-self: end;
   margin: 0;
-  font-size: clamp(1.15rem, 4.5vw, 1.5rem);
-  font-weight: 900;
+  font-size: 0.85rem;
+  font-weight: 800;
   font-family: var(--font-title);
-  color: #0f172a;
+  color: #64748b;
   line-height: 1;
   text-align: right;
   white-space: nowrap;
@@ -1164,15 +1165,16 @@ textarea:focus {
   justify-self: end;
   margin: 0;
   max-width: 100%;
-  font-size: clamp(0.95rem, 3.8vw, 1.2rem);
+  font-size: clamp(1.55rem, 7vw, 2.25rem);
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: #0f172a;
   text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
+  line-height: 1.15;
 }
 
 .history-ticket {
@@ -1595,14 +1597,18 @@ textarea:focus {
   font-size: clamp(2.4rem, 11vw, 3.5rem);
 }
 
+.admin-compact .admin-detail-header .admin-timestamp {
+  font-size: 0.6rem;
+}
+
 .admin-compact .admin-detail-header .admin-price {
-  font-size: clamp(1.05rem, 4vw, 1.35rem);
-  font-weight: 900;
-  color: #0f172a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #64748b;
 }
 
 .admin-compact .admin-detail-id {
-  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
+  font-size: clamp(1.4rem, 6.5vw, 2rem);
 }
 
 .admin-compact .admin-gps-box {
