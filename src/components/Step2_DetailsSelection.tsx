@@ -39,6 +39,7 @@ export default function Step2_DetailsSelection({
     const threadsRef = useRef<HTMLElement>(null);
     const soundCardRef = useRef<HTMLElement>(null);
     const remarksRef = useRef<HTMLElement>(null);
+    const skipThreadScrollRef = useRef(false);
 
     const bringIn = isBringInItem(order.item);
     const colorReady = bringIn || !!order.itemColor;
@@ -147,12 +148,33 @@ export default function Step2_DetailsSelection({
         }
     };
 
+    const handleThreadRandomize = () => {
+        const pool = visibleThreads.map(c => c.id);
+        if (pool.length === 0) return;
+        const count = threadLimitFor(order.plan);
+        const shuffled = [...pool];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const threads = Array.from({ length: count }, (_, i) =>
+            i < shuffled.length ? shuffled[i] : pool[Math.floor(Math.random() * pool.length)]
+        );
+        skipThreadScrollRef.current = !threadsReady;
+        onUpdate({ threads });
+    };
+
     const threadCount = threadLimitFor(order.plan);
     const threadsReady =
         order.threads.length === threadCount && order.threads.every(t => t !== "");
 
     useEffect(() => {
-        if (threadsReady) scrollTo(soundCardRef);
+        if (!threadsReady) return;
+        if (skipThreadScrollRef.current) {
+            skipThreadScrollRef.current = false;
+            return;
+        }
+        scrollTo(soundCardRef);
     }, [threadsReady]);
 
     let activeSection = 0;
@@ -366,6 +388,7 @@ export default function Step2_DetailsSelection({
                         selected={order.threads}
                         colors={visibleThreads}
                         onToggle={handleThreadToggle}
+                        onRandomize={handleThreadRandomize}
                     />
                 ) : (
                     <div className="tile is-disabled">

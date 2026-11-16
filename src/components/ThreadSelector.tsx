@@ -7,12 +7,14 @@ export default function ThreadSelector({
     limit,
     selected,
     colors,
-    onToggle
+    onToggle,
+    onRandomize,
 }: {
     limit: number;
     selected: string[];
     colors: ThreadColor[];
     onToggle: (id: string, index?: number) => void;
+    onRandomize: () => void;
 }) {
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -35,7 +37,27 @@ export default function ThreadSelector({
         <div className="thread-selector">
             <div className="thread-palette-head">
                 <span className="thread-palette-label">パレットから色を選択</span>
-                <span className={`thread-count ${filledCount === limit ? "is-complete" : ""}`}>{filledCount} / {limit}</span>
+                <div className="thread-palette-actions">
+                    {colors.length > 0 && (
+                        <button
+                            type="button"
+                            className="thread-random-btn"
+                            onClick={() => {
+                                onRandomize();
+                                setActiveIndex(0);
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="4" />
+                                <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" />
+                                <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" />
+                                <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+                            </svg>
+                            ゆだねる
+                        </button>
+                    )}
+                    <span className={`thread-count ${filledCount === limit ? "is-complete" : ""}`}>{filledCount} / {limit}</span>
+                </div>
             </div>
 
             {colors.length > 0 ? (
