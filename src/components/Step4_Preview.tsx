@@ -6,7 +6,7 @@ import {
     formatSoundCardLabel,
     SOUND_CARD_UNIT_PRICE,
 } from "@/hooks/useOrderForm";
-import { resolveThreadColor } from "@/constants/colors";
+import { MasterThreadItem, resolveThreadColor } from "@/constants/colors";
 import { normalizeZip } from "@/utils/shipping";
 import { GPS_OPTION_PRICE } from "@/utils/gps";
 import { StepHeader } from "./FormHeadings";
@@ -24,12 +24,14 @@ export default function Step4_Preview({
     order,
     staffConfirmed = false,
     ticketNumber = null,
+    masterThreads = [],
 }: {
     order: OrderState;
+    masterThreads?: MasterThreadItem[];
     staffConfirmed?: boolean;
     ticketNumber?: number | null;
 }) {
-    const getThreadColor = (id: string) => resolveThreadColor(id);
+    const getThreadColor = (id: string) => resolveThreadColor(id, masterThreads);
     const isShipping = order.deliveryMethod === "shipping";
     const itemsSubtotal = order.totalPrice - order.shippingFee;
     const displayColor = order.itemColor

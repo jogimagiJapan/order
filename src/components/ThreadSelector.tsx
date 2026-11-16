@@ -25,6 +25,10 @@ export default function ThreadSelector({
     }, [limit, activeIndex]);
 
     const filledCount = selected.filter(s => s).length;
+    const paletteColors = [
+        ...colors.filter(c => !c.special),
+        ...colors.filter(c => c.special),
+    ];
 
     const handlePaletteClick = (colorId: string) => {
         onToggle(colorId, activeIndex);
@@ -60,16 +64,19 @@ export default function ThreadSelector({
                 </div>
             </div>
 
-            {colors.length > 0 ? (
+            {paletteColors.length > 0 ? (
                 <div className="thread-grid">
-                    {colors.map((color) => (
+                    {paletteColors.map((color) => (
                         <div key={color.id} className="chip-container">
                             <div
-                                className="color-chip-large"
+                                className={`color-chip-large ${color.special ? "is-event" : ""}`}
                                 style={{ backgroundColor: color.hex }}
                                 onClick={() => handlePaletteClick(color.id)}
                             />
                             <span className="chip-id">{color.id}</span>
+                            {color.label && (
+                                <span className="chip-event-label">{color.label}</span>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -2,6 +2,8 @@ export interface ThreadColor {
     id: string;
     hex: string;
     name: string;
+    special?: boolean;
+    label?: string;
 }
 
 /** Fixed A–L mapping (fallback for admin / missing master rows). */
@@ -30,19 +32,30 @@ export interface ThreadColorOption extends ThreadColor {
     visible: boolean;
 }
 
-/** Parse master ThreadColor row. 備考 = `#hex|Name`, 対象アイテムに「表示」で公開. */
+/**
+ * Parse master ThreadColor row.
+ * 備考 = `#hex|Name|Label`（Label は任意）, 対象アイテム = 表示 / 非表示 / イベント.
+ */
 export function parseThreadColorItem(item: MasterThreadItem): ThreadColorOption {
     const fallback = THREAD_COLORS.find(c => c.id === item.name);
     const note = String(item.note || "");
-    const [hexPart, ...nameParts] = note.split("|");
+    const [hexPart, namePart, ...labelParts] = note.split("|").map(part => part.trim());
     const hex = hexPart && hexPart.startsWith("#") ? hexPart : (fallback?.hex || "#cccccc");
-    const name = nameParts.join("|") || fallback?.name || item.name;
+    const name = namePart || fallback?.name || String(item.name);
+    const special = item.associatedItems.includes("イベント");
+    const labelText = labelParts.join("|").trim();
     return {
-        id: item.name,
+        id: String(item.name),
         hex,
         name,
-        visible: item.associatedItems.includes("表示"),
+        special,
+        label: labelText || undefined,
+        visible: special || item.associatedItems.includes("表示"),
     };
+}
+
+function toThreadColor({ id, hex, name, special, label }: ThreadColorOption): ThreadColor {
+    return { id, hex, name, special, label };
 }
 
 export function getVisibleThreadColors(masterThreads: MasterThreadItem[]): ThreadColor[] {
@@ -52,7 +65,7 @@ export function getVisibleThreadColors(masterThreads: MasterThreadItem[]): Threa
     return masterThreads
         .map(parseThreadColorItem)
         .filter(c => c.visible)
-        .map(({ id, hex, name }) => ({ id, hex, name }));
+        .map(toThreadColor);
 }
 
 export function resolveThreadColor(
@@ -61,7 +74,7 @@ export function resolveThreadColor(
 ): ThreadColor | undefined {
     const fromMaster = masterThreads.map(parseThreadColorItem).find(c => c.id === id);
     if (fromMaster) {
-        return { id: fromMaster.id, hex: fromMaster.hex, name: fromMaster.name };
+        return toThreadColor(fromMaster);
     }
     return THREAD_COLORS.find(c => c.id === id);
 }

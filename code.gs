@@ -110,9 +110,9 @@ function onOpen() {
 
 /**
  * マスタ編集時:
- * - ThreadColor の備考(#hex|Name) → 同じ行の F列（色見本）に背景色
+ * - ThreadColor の備考(#hex|Name|Label) → 同じ行の F列（色見本）に背景色
  * - F25 のカラーコード → F24 の背景色
- * - 対象アイテムは「表示 / 非表示」プルダウン
+ * - 対象アイテムは「表示 / 非表示 / イベント」プルダウン
  */
 function onEdit(e) {
   if (!e || !e.range) return;
@@ -353,7 +353,8 @@ function migrateMasterData(masterSheet) {
 }
 
 /**
- * ThreadColor 行の「表示/非表示」プルダウンと色見本(F列)を整える。
+ * ThreadColor 行の「表示/非表示/イベント」プルダウンと色見本(F列)を整える。
+ * イベント糸は ID を SP1, SP2… とし、終了後は行を残したまま「非表示」にする。
  * 手動実行: setupMasterThreadUi(SpreadsheetApp.getActiveSpreadsheet().getSheetByName("マスタデータ"))
  */
 function setupMasterThreadUi(masterSheet) {
@@ -368,9 +369,9 @@ function setupMasterThreadUi(masterSheet) {
   masterSheet.setColumnWidth(6, 56);
 
   const visibilityRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(["表示", "非表示"], true)
+    .requireValueInList(["表示", "非表示", "イベント"], true)
     .setAllowInvalid(false)
-    .setHelpText("表示=注文画面に出す / 非表示=出さない")
+    .setHelpText("表示=注文画面に出す / 非表示=出さない / イベント=限定糸（金枠）。備考: #hex|色名|ラベル（ラベルは任意）")
     .build();
 
   const values = masterSheet.getDataRange().getValues();
@@ -381,7 +382,7 @@ function setupMasterThreadUi(masterSheet) {
     flagCell.setDataValidation(visibilityRule);
 
     const flag = String(values[i][4] || "").trim();
-    if (flag !== "表示" && flag !== "非表示") {
+    if (flag !== "表示" && flag !== "非表示" && flag !== "イベント") {
       // 空欄は従来どおり非表示扱い → 明示的に「非表示」へ
       flagCell.setValue("非表示");
     }

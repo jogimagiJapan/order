@@ -271,6 +271,7 @@ function OrderPageInner() {
               order={order}
               staffConfirmed={isStaffConfirmed}
               ticketNumber={ticketNumber}
+              masterThreads={masterData.threads}
             />
           )}
         </main>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { resolveThreadColor } from "@/constants/colors";
+import { MasterThreadItem, resolveThreadColor } from "@/constants/colors";
 import { ACTIVE_GAS_URL } from "@/constants/gas";
 import { formatShortDisplayId, parseDisplayId } from "@/utils/id";
 import { formatPlan, threadLimitFor } from "@/utils/plan";
@@ -81,6 +81,7 @@ export default function AdminDashboard() {
     const [searching, setSearching] = useState(false);
     const [searchError, setSearchError] = useState("");
     const [planReview, setPlanReview] = useState<Record<string, string>>({});
+    const [masterThreads, setMasterThreads] = useState<MasterThreadItem[]>([]);
     const searchSeq = useRef(0);
 
     useEffect(() => {
@@ -99,6 +100,7 @@ export default function AdminDashboard() {
                 reviewMap[formatPlan(String(row.name).trim())] = String(row.note || "").trim();
             });
             setPlanReview(reviewMap);
+            setMasterThreads(data.masterData?.threads || []);
             // 詳細は自動で切り替えない。未選択時だけ先頭を選ぶ
             setSelectedOrder(prev => {
                 if (!prev) return next[0] || null;
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
         );
     }
 
-    const getThreadColor = (id: string) => resolveThreadColor(id);
+    const getThreadColor = (id: string) => resolveThreadColor(id, masterThreads);
     const canClear = isSearchMode || idQuery.trim() !== "";
 
     return (
@@ -298,7 +300,7 @@ function OrderDetail({
     reviewType,
 }: {
     current: Submission;
-    getThreadColor: (id: string) => { id: string; hex: string; name: string } | undefined;
+    getThreadColor: (id: string) => { id: string; hex: string; name: string; special?: boolean } | undefined;
     reviewType: string;
 }) {
     const [shippingOpen, setShippingOpen] = useState(false);
@@ -406,7 +408,7 @@ function OrderDetail({
                         return (
                             <div key={i} className="thread-preview-item">
                                 <div
-                                    className="color-swatch"
+                                    className={`color-swatch ${color?.special ? "is-event" : ""}`}
                                     style={{ backgroundColor: color?.hex }}
                                 />
                                 <span className="thread-id-name">
