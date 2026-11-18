@@ -250,9 +250,14 @@ export default function Step2_DetailsSelection({
                             <input
                                 className="gps-input"
                                 type="text"
+                                lang="en"
                                 inputMode="text"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                autoCapitalize="characters"
+                                spellCheck={false}
                                 maxLength={GPS_TEXT_MAX}
-                                placeholder="2026.03.19 00:56:08"
+                                placeholder="17NOV2026_132456"
                                 value={order.gpsDatetime}
                                 onChange={(e) => onUpdate({ gpsDatetime: sanitizeGpsText(e.target.value) })}
                             />
@@ -265,7 +270,12 @@ export default function Step2_DetailsSelection({
                             <input
                                 className="gps-input"
                                 type="text"
+                                lang="en"
                                 inputMode="text"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                autoCapitalize="characters"
+                                spellCheck={false}
                                 maxLength={GPS_TEXT_MAX}
                                 placeholder="34.814733,135.378753"
                                 value={order.gpsLocation}
