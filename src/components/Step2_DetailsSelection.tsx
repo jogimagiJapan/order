@@ -272,7 +272,7 @@ export default function Step2_DetailsSelection({
                                 onChange={(e) => onUpdate({ gpsLocation: sanitizeGpsText(e.target.value) })}
                             />
                         </label>
-                        <p className="gps-hint">使用可能: 英数字 . , - : スペース</p>
+                        <p className="gps-hint">使用可能: 大文字英字 A–Z・数字・. , - _ : /・スペース（小文字は自動で大文字に変換）</p>
                     </div>
                 )}
             </section>
