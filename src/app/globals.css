@@ -1608,7 +1608,7 @@ textarea:focus {
 }
 
 .admin-compact .admin-detail-id {
-  font-size: clamp(1.4rem, 6.5vw, 2rem);
+  font-size: clamp(1.2rem, 5.5vw, 1.7rem);
 }
 
 .admin-compact .admin-gps-box {
